@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput } from 'r
 import { StackNavigationProp } from '@react-navigation/stack';
 import { catBreeds, CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
+import { useFavorites } from '../hooks/useFavorites';
 
 type BreedsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BreedsList'>;
 
@@ -13,6 +14,9 @@ interface Props {
 export default function BreedsScreen({ navigation }: Props) {
   // State to hold our search query
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Use our custom favorites hook
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   // Filter breeds based on search query using useMemo for performance
   const filteredBreeds = useMemo(() => {
@@ -27,6 +31,12 @@ export default function BreedsScreen({ navigation }: Props) {
     );
   }, [searchQuery]);
 
+  const handleFavoritePress = async (breed: CatBreed, event: any) => {
+    // Prevent navigation when heart is pressed
+    event.stopPropagation();
+    await toggleFavorite(breed);
+  };
+
   const renderBreed = ({ item }: { item: CatBreed }) => (
     <TouchableOpacity 
       style={styles.breedCard}
@@ -38,6 +48,16 @@ export default function BreedsScreen({ navigation }: Props) {
         <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
         <Text style={styles.breedTemperament}>{item.temperament}</Text>
       </View>
+      
+      {/* Favorite Heart Button */}
+      <TouchableOpacity 
+        style={styles.favoriteButton}
+        onPress={(event) => handleFavoritePress(item, event)}
+      >
+        <Text style={styles.favoriteIcon}>
+          {isFavorite(item.id) ? '❤️' : '🤍'}
+        </Text>
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 
@@ -179,6 +199,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3498db',
     fontStyle: 'italic',
+  },
+  favoriteButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
+  favoriteIcon: {
+    fontSize: 24,
   },
   emptyState: {
     alignItems: 'center',
