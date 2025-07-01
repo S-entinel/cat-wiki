@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CatBreed } from '../data/catBreeds';
@@ -13,7 +13,6 @@ export default function FavoritesScreen() {
   const { favorites, isLoading, toggleFavorite } = useFavorites();
 
   const handleFavoritePress = async (breed: CatBreed, event: any) => {
-    // Prevent navigation when heart is pressed
     event.stopPropagation();
     await toggleFavorite(breed);
   };
@@ -23,14 +22,19 @@ export default function FavoritesScreen() {
       style={styles.breedCard}
       onPress={() => navigation.navigate('BreedDetail', { breed: item })}
     >
-      <Text style={styles.emoji}>{item.image}</Text>
+      <Image 
+        source={item.image} 
+        style={styles.breedImage}
+        resizeMode="cover"
+      />
       <View style={styles.breedInfo}>
         <Text style={styles.breedName}>{item.name}</Text>
         <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
-        <Text style={styles.breedTemperament}>{item.temperament}</Text>
+        <Text style={styles.breedTemperament} numberOfLines={2}>
+          {item.temperament}
+        </Text>
       </View>
       
-      {/* Remove from Favorites Button */}
       <TouchableOpacity 
         style={styles.favoriteButton}
         onPress={(event) => handleFavoritePress(item, event)}
@@ -124,8 +128,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  emoji: {
-    fontSize: 40,
+  breedImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     marginRight: 16,
   },
   breedInfo: {

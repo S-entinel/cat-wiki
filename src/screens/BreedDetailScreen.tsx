@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, Image } from 'react-native';
 import { RouteProp } from '@react-navigation/native';
 import { CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
@@ -13,11 +13,14 @@ interface Props {
 export default function BreedDetailScreen({ route }: Props) {
   const { breed } = route.params;
 
-
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.emoji}>{breed.image}</Text>
+        <Image 
+          source={breed.image} 
+          style={styles.breedImage}
+          resizeMode="cover"
+        />
         <Text style={styles.name}>{breed.name}</Text>
       </View>
       
@@ -55,8 +58,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     marginBottom: 20,
   },
-  emoji: {
-    fontSize: 80,
+  breedImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
     marginBottom: 16,
   },
   name: {

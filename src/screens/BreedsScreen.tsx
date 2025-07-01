@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { catBreeds, CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
@@ -42,11 +42,17 @@ export default function BreedsScreen({ navigation }: Props) {
       style={styles.breedCard}
       onPress={() => navigation.navigate('BreedDetail', { breed: item })}
     >
-      <Text style={styles.emoji}>{item.image}</Text>
+      <Image 
+        source={item.image} 
+        style={styles.breedImage}
+        resizeMode="cover"
+      />
       <View style={styles.breedInfo}>
         <Text style={styles.breedName}>{item.name}</Text>
         <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
-        <Text style={styles.breedTemperament}>{item.temperament}</Text>
+        <Text style={styles.breedTemperament} numberOfLines={2}>
+          {item.temperament}
+        </Text>
       </View>
       
       {/* Favorite Heart Button */}
@@ -125,13 +131,13 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     marginBottom: 16,
-    position: 'relative', // Enable absolute positioning for clear button
+    position: 'relative',
   },
   searchInput: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
-    paddingRight: 50, // Make space for clear button
+    paddingRight: 50,
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#e1e8ed',
@@ -145,7 +151,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 12,
     top: '50%',
-    transform: [{ translateY: -12 }], // Center vertically
+    transform: [{ translateY: -12 }],
     backgroundColor: '#e74c3c',
     borderRadius: 12,
     width: 24,
@@ -177,8 +183,10 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  emoji: {
-    fontSize: 40,
+  breedImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     marginRight: 16,
   },
   breedInfo: {
