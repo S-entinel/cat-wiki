@@ -1,10 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image } from 'react-native';
+import React, { useState, useMemo, useEffect } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image, Animated } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { catBreeds, CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
 import { useFavorites } from '../context/FavoritesContext';
 import { FilterDropdown } from '../components/FilterDropdown';
+import { SortDropdown, SortOption } from '../components/SortDropdown';
+import { AnimatedHeart } from '../components/AnimatedHeart';
 
 type BreedsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BreedsList'>;
 
@@ -12,14 +15,49 @@ interface Props {
   navigation: BreedsScreenNavigationProp;
 }
 
+const SEARCH_HISTORY_KEY = '@cat_app_search_history';
+
 export default function BreedsScreen({ navigation }: Props) {
-  // State for search and filters
+  // State for search, filters, and sort
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrigin, setSelectedOrigin] = useState('');
   const [selectedTemperament, setSelectedTemperament] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('name');
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
+
+  // Animation for the entire list
+  const fadeAnim = useMemo(() => new Animated.Value(1), []);
   
-  // Use our custom favorites hook
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  // Load search history on component mount
+  useEffect(() => {
+    loadSearchHistory();
+  }, []);
+
+  const loadSearchHistory = async () => {
+    try {
+      const history = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
+      if (history) {
+        setSearchHistory(JSON.parse(history));
+      }
+    } catch (error) {
+      console.error('Error loading search history:', error);
+    }
+  };
+
+  const saveSearchToHistory = async (query: string) => {
+    if (!query.trim() || query.length < 2) return;
+    
+    try {
+      const newHistory = [query, ...searchHistory.filter(item => item !== query)].slice(0, 5);
+      setSearchHistory(newHistory);
+      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Error saving search history:', error);
+    }
+  };
 
   // Generate filter options from our breed data
   const originOptions = useMemo(() => {
@@ -28,7 +66,6 @@ export default function BreedsScreen({ navigation }: Props) {
   }, []);
 
   const temperamentOptions = useMemo(() => {
-    // Extract individual temperament traits from all breeds
     const allTraits = catBreeds.flatMap(breed => 
       breed.temperament.split(',').map(trait => trait.trim())
     );
@@ -36,8 +73,14 @@ export default function BreedsScreen({ navigation }: Props) {
     return uniqueTraits.sort().map(trait => ({ label: trait, value: trait }));
   }, []);
 
-  // Apply all filters: search, origin, and temperament
-  const filteredBreeds = useMemo(() => {
+  // Helper function to parse lifespan for sorting
+  const parseLifespan = (lifespan: string): number => {
+    const match = lifespan.match(/(\d+)/);
+    return match ? parseInt(match[1]) : 0;
+  };
+
+  // Apply all filters and sorting
+  const filteredAndSortedBreeds = useMemo(() => {
     let filtered = catBreeds;
 
     // Apply search filter
@@ -61,48 +104,114 @@ export default function BreedsScreen({ navigation }: Props) {
       );
     }
 
-    return filtered;
-  }, [searchQuery, selectedOrigin, selectedTemperament]);
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'origin':
+          return a.origin.localeCompare(b.origin);
+        case 'lifespan':
+          return parseLifespan(b.lifespan) - parseLifespan(a.lifespan); // Descending
+        case 'temperament':
+          return a.temperament.localeCompare(b.temperament);
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [searchQuery, selectedOrigin, selectedTemperament, sortBy]);
+
+  // Animate when results change
+  useEffect(() => {
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.7,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [filteredAndSortedBreeds.length]);
 
   const clearAllFilters = () => {
     setSearchQuery('');
     setSelectedOrigin('');
     setSelectedTemperament('');
+    setSortBy('name');
   };
 
-  const hasActiveFilters = searchQuery || selectedOrigin || selectedTemperament;
+  const hasActiveFilters = searchQuery || selectedOrigin || selectedTemperament || sortBy !== 'name';
+
+  const handleSearchSubmit = () => {
+    if (searchQuery.trim()) {
+      saveSearchToHistory(searchQuery.trim());
+      setShowSearchHistory(false);
+    }
+  };
+
+  const handleSearchHistorySelect = (historyItem: string) => {
+    setSearchQuery(historyItem);
+    setShowSearchHistory(false);
+  };
 
   const handleFavoritePress = async (breed: CatBreed, event: any) => {
     event.stopPropagation();
     await toggleFavorite(breed);
   };
 
-  const renderBreed = ({ item }: { item: CatBreed }) => (
-    <TouchableOpacity 
-      style={styles.breedCard}
-      onPress={() => navigation.navigate('BreedDetail', { breed: item })}
+  const renderBreed = ({ item, index }: { item: CatBreed; index: number }) => (
+    <Animated.View
+      style={[
+        styles.breedCardContainer,
+        {
+          opacity: fadeAnim,
+          transform: [{
+            translateY: fadeAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [10, 0],
+            })
+          }]
+        }
+      ]}
     >
-      <Image 
-        source={item.image} 
-        style={styles.breedImage}
-        resizeMode="cover"
-      />
-      <View style={styles.breedInfo}>
-        <Text style={styles.breedName}>{item.name}</Text>
-        <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
-        <Text style={styles.breedTemperament} numberOfLines={2}>
-          {item.temperament}
-        </Text>
-      </View>
-      
       <TouchableOpacity 
-        style={styles.favoriteButton}
-        onPress={(event) => handleFavoritePress(item, event)}
+        style={styles.breedCard}
+        onPress={() => navigation.navigate('BreedDetail', { breed: item })}
       >
-        <Text style={styles.favoriteIcon}>
-          {isFavorite(item.id) ? '❤️' : '🤍'}
-        </Text>
+        <Image 
+          source={item.image} 
+          style={styles.breedImage}
+          resizeMode="cover"
+        />
+        <View style={styles.breedInfo}>
+          <Text style={styles.breedName}>{item.name}</Text>
+          <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
+          <Text style={styles.breedTemperament} numberOfLines={2}>
+            {item.temperament}
+          </Text>
+        </View>
+        
+        <AnimatedHeart
+          isFavorite={isFavorite(item.id)}
+          onPress={() => handleFavoritePress(item, { stopPropagation: () => {} })}
+        />
       </TouchableOpacity>
+    </Animated.View>
+  );
+
+  const renderSearchHistoryItem = ({ item }: { item: string }) => (
+    <TouchableOpacity 
+      style={styles.historyItem}
+      onPress={() => handleSearchHistorySelect(item)}
+    >
+      <Text style={styles.historyIcon}>🕐</Text>
+      <Text style={styles.historyText}>{item}</Text>
     </TouchableOpacity>
   );
 
@@ -136,8 +245,12 @@ export default function BreedsScreen({ navigation }: Props) {
           placeholder="Search breeds, origins, or temperaments..."
           value={searchQuery}
           onChangeText={setSearchQuery}
+          onSubmitEditing={handleSearchSubmit}
+          onFocus={() => setShowSearchHistory(searchHistory.length > 0)}
+          onBlur={() => setTimeout(() => setShowSearchHistory(false), 150)}
           autoCapitalize="none"
           autoCorrect={false}
+          returnKeyType="search"
         />
         {searchQuery.length > 0 && (
           <TouchableOpacity 
@@ -147,23 +260,41 @@ export default function BreedsScreen({ navigation }: Props) {
             <Text style={styles.clearButtonText}>✕</Text>
           </TouchableOpacity>
         )}
+        
+        {/* Search History Dropdown */}
+        {showSearchHistory && (
+          <View style={styles.searchHistoryContainer}>
+            <FlatList
+              data={searchHistory}
+              renderItem={renderSearchHistoryItem}
+              keyExtractor={(item, index) => `${item}-${index}`}
+              style={styles.searchHistoryList}
+            />
+          </View>
+        )}
       </View>
 
-      {/* Filter Dropdowns */}
-      <View style={styles.filtersContainer}>
-        <FilterDropdown
-          title="Origin"
-          options={originOptions}
-          selectedValue={selectedOrigin}
-          onSelect={setSelectedOrigin}
-          placeholder="All Origins"
-        />
-        <FilterDropdown
-          title="Temperament"
-          options={temperamentOptions}
-          selectedValue={selectedTemperament}
-          onSelect={setSelectedTemperament}
-          placeholder="All Traits"
+      {/* Filter and Sort Controls */}
+      <View style={styles.controlsContainer}>
+        <View style={styles.filtersContainer}>
+          <FilterDropdown
+            title="Origin"
+            options={originOptions}
+            selectedValue={selectedOrigin}
+            onSelect={setSelectedOrigin}
+            placeholder="All Origins"
+          />
+          <FilterDropdown
+            title="Temperament"
+            options={temperamentOptions}
+            selectedValue={selectedTemperament}
+            onSelect={setSelectedTemperament}
+            placeholder="All Traits"
+          />
+        </View>
+        <SortDropdown
+          selectedSort={sortBy}
+          onSortChange={setSortBy}
         />
       </View>
 
@@ -171,10 +302,11 @@ export default function BreedsScreen({ navigation }: Props) {
       {hasActiveFilters && (
         <View style={styles.activeFiltersContainer}>
           <Text style={styles.activeFiltersText}>
-            Filters active: 
+            Active: 
             {searchQuery && ` Search`}
             {selectedOrigin && ` Origin`}
             {selectedTemperament && ` Temperament`}
+            {sortBy !== 'name' && ` Sort`}
           </Text>
           <TouchableOpacity onPress={clearAllFilters}>
             <Text style={styles.clearAllText}>Clear All</Text>
@@ -184,17 +316,19 @@ export default function BreedsScreen({ navigation }: Props) {
 
       {/* Results count */}
       <Text style={styles.resultsCount}>
-        {filteredBreeds.length} breed{filteredBreeds.length !== 1 ? 's' : ''} found
+        {filteredAndSortedBreeds.length} breed{filteredAndSortedBreeds.length !== 1 ? 's' : ''} found
       </Text>
 
-      <FlatList
-        data={filteredBreeds}
-        renderItem={renderBreed}
-        keyExtractor={(item) => item.id}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={renderEmptyState}
-        contentContainerStyle={filteredBreeds.length === 0 ? styles.emptyContainer : undefined}
-      />
+      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
+        <FlatList
+          data={filteredAndSortedBreeds}
+          renderItem={renderBreed}
+          keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          contentContainerStyle={filteredAndSortedBreeds.length === 0 ? styles.emptyContainer : undefined}
+        />
+      </Animated.View>
     </View>
   );
 }
@@ -247,9 +381,48 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  filtersContainer: {
+  searchHistoryContainer: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginTop: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    zIndex: 1000,
+  },
+  searchHistoryList: {
+    maxHeight: 200,
+  },
+  historyItem: {
     flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
+  },
+  historyIcon: {
+    fontSize: 16,
+    marginRight: 8,
+    color: '#7f8c8d',
+  },
+  historyText: {
+    fontSize: 14,
+    color: '#2c3e50',
+  },
+  controlsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
+  },
+  filtersContainer: {
+    flex: 1,
+    flexDirection: 'row',
     gap: 8,
   },
   activeFiltersContainer: {
@@ -277,11 +450,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
+  breedCardContainer: {
+    marginBottom: 12,
+  },
   breedCard: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
@@ -314,13 +489,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#3498db',
     fontStyle: 'italic',
-  },
-  favoriteButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-  favoriteIcon: {
-    fontSize: 24,
   },
   emptyState: {
     alignItems: 'center',
