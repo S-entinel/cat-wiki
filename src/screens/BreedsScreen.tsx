@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image } 
 import { StackNavigationProp } from '@react-navigation/stack';
 import { catBreeds, CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '../context/FavoritesContext';
 
 type BreedsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BreedsList'>;
 

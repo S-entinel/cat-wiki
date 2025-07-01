@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
-import { useFavorites } from '../hooks/useFavorites';
+import { useFavorites } from '../context/FavoritesContext';
 
 type FavoritesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 

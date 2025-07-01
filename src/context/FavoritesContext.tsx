@@ -1,14 +1,31 @@
-import { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CatBreed } from '../data/catBreeds';
 
 const FAVORITES_KEY = '@cat_app_favorites';
 
-export const useFavorites = () => {
+interface FavoritesContextType {
+  favorites: CatBreed[];
+  isLoading: boolean;
+  addToFavorites: (breed: CatBreed) => Promise<void>;
+  removeFromFavorites: (breedId: string) => Promise<void>;
+  toggleFavorite: (breed: CatBreed) => Promise<void>;
+  isFavorite: (breedId: string) => boolean;
+}
+
+// Create the context
+const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+
+interface FavoritesProviderProps {
+  children: ReactNode;
+}
+
+// Provider component that wraps the app
+export const FavoritesProvider: React.FC<FavoritesProviderProps> = ({ children }) => {
   const [favorites, setFavorites] = useState<CatBreed[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load favorites from storage when the hook initializes
+  // Load favorites from storage when the provider initializes
   useEffect(() => {
     loadFavorites();
   }, []);
@@ -29,7 +46,7 @@ export const useFavorites = () => {
   const saveFavorites = async (newFavorites: CatBreed[]) => {
     try {
       await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(newFavorites));
-      setFavorites(newFavorites);
+      setFavorites(newFavorites); // This will trigger re-renders in ALL screens using the context
     } catch (error) {
       console.error('Error saving favorites:', error);
     }
@@ -57,7 +74,7 @@ export const useFavorites = () => {
     return favorites.some(breed => breed.id === breedId);
   };
 
-  return {
+  const value: FavoritesContextType = {
     favorites,
     isLoading,
     addToFavorites,
@@ -65,4 +82,19 @@ export const useFavorites = () => {
     toggleFavorite,
     isFavorite,
   };
+
+  return (
+    <FavoritesContext.Provider value={value}>
+      {children}
+    </FavoritesContext.Provider>
+  );
+};
+
+// Custom hook to use the favorites context
+export const useFavorites = (): FavoritesContextType => {
+  const context = useContext(FavoritesContext);
+  if (context === undefined) {
+    throw new Error('useFavorites must be used within a FavoritesProvider');
+  }
+  return context;
 };
