@@ -4,6 +4,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { catBreeds, CatBreed } from '../data/catBreeds';
 import { RootStackParamList } from '../types/navigation';
 import { useFavorites } from '../context/FavoritesContext';
+import { FilterDropdown } from '../components/FilterDropdown';
 
 type BreedsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BreedsList'>;
 
@@ -12,27 +13,66 @@ interface Props {
 }
 
 export default function BreedsScreen({ navigation }: Props) {
-  // State to hold our search query
+  // State for search and filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrigin, setSelectedOrigin] = useState('');
+  const [selectedTemperament, setSelectedTemperament] = useState('');
   
   // Use our custom favorites hook
   const { toggleFavorite, isFavorite } = useFavorites();
 
-  // Filter breeds based on search query using useMemo for performance
-  const filteredBreeds = useMemo(() => {
-    if (!searchQuery.trim()) {
-      return catBreeds; // Return all breeds if no search query
-    }
-    
-    return catBreeds.filter(breed => 
-      breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      breed.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      breed.temperament.toLowerCase().includes(searchQuery.toLowerCase())
+  // Generate filter options from our breed data
+  const originOptions = useMemo(() => {
+    const uniqueOrigins = [...new Set(catBreeds.map(breed => breed.origin))];
+    return uniqueOrigins.sort().map(origin => ({ label: origin, value: origin }));
+  }, []);
+
+  const temperamentOptions = useMemo(() => {
+    // Extract individual temperament traits from all breeds
+    const allTraits = catBreeds.flatMap(breed => 
+      breed.temperament.split(',').map(trait => trait.trim())
     );
-  }, [searchQuery]);
+    const uniqueTraits = [...new Set(allTraits)];
+    return uniqueTraits.sort().map(trait => ({ label: trait, value: trait }));
+  }, []);
+
+  // Apply all filters: search, origin, and temperament
+  const filteredBreeds = useMemo(() => {
+    let filtered = catBreeds;
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(breed => 
+        breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        breed.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        breed.temperament.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply origin filter
+    if (selectedOrigin) {
+      filtered = filtered.filter(breed => breed.origin === selectedOrigin);
+    }
+
+    // Apply temperament filter
+    if (selectedTemperament) {
+      filtered = filtered.filter(breed => 
+        breed.temperament.toLowerCase().includes(selectedTemperament.toLowerCase())
+      );
+    }
+
+    return filtered;
+  }, [searchQuery, selectedOrigin, selectedTemperament]);
+
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedOrigin('');
+    setSelectedTemperament('');
+  };
+
+  const hasActiveFilters = searchQuery || selectedOrigin || selectedTemperament;
 
   const handleFavoritePress = async (breed: CatBreed, event: any) => {
-    // Prevent navigation when heart is pressed
     event.stopPropagation();
     await toggleFavorite(breed);
   };
@@ -55,7 +95,6 @@ export default function BreedsScreen({ navigation }: Props) {
         </Text>
       </View>
       
-      {/* Favorite Heart Button */}
       <TouchableOpacity 
         style={styles.favoriteButton}
         onPress={(event) => handleFavoritePress(item, event)}
@@ -70,8 +109,19 @@ export default function BreedsScreen({ navigation }: Props) {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Text style={styles.emptyStateText}>
-        {searchQuery ? 'No breeds found matching your search' : 'No breeds available'}
+        {hasActiveFilters 
+          ? 'No breeds match your current filters' 
+          : 'No breeds available'
+        }
       </Text>
+      {hasActiveFilters && (
+        <TouchableOpacity 
+          style={styles.clearFiltersButton}
+          onPress={clearAllFilters}
+        >
+          <Text style={styles.clearFiltersText}>Clear All Filters</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -79,7 +129,7 @@ export default function BreedsScreen({ navigation }: Props) {
     <View style={styles.container}>
       <Text style={styles.title}>Cat Breeds</Text>
       
-      {/* Search Input with Clear Button */}
+      {/* Search Input */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
@@ -98,6 +148,39 @@ export default function BreedsScreen({ navigation }: Props) {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Filter Dropdowns */}
+      <View style={styles.filtersContainer}>
+        <FilterDropdown
+          title="Origin"
+          options={originOptions}
+          selectedValue={selectedOrigin}
+          onSelect={setSelectedOrigin}
+          placeholder="All Origins"
+        />
+        <FilterDropdown
+          title="Temperament"
+          options={temperamentOptions}
+          selectedValue={selectedTemperament}
+          onSelect={setSelectedTemperament}
+          placeholder="All Traits"
+        />
+      </View>
+
+      {/* Active Filters Indicator */}
+      {hasActiveFilters && (
+        <View style={styles.activeFiltersContainer}>
+          <Text style={styles.activeFiltersText}>
+            Filters active: 
+            {searchQuery && ` Search`}
+            {selectedOrigin && ` Origin`}
+            {selectedTemperament && ` Temperament`}
+          </Text>
+          <TouchableOpacity onPress={clearAllFilters}>
+            <Text style={styles.clearAllText}>Clear All</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Results count */}
       <Text style={styles.resultsCount}>
@@ -164,6 +247,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
+  filtersContainer: {
+    flexDirection: 'row',
+    marginBottom: 12,
+    gap: 8,
+  },
+  activeFiltersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#e3f2fd',
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  activeFiltersText: {
+    fontSize: 12,
+    color: '#3498db',
+    fontWeight: '500',
+  },
+  clearAllText: {
+    fontSize: 12,
+    color: '#e74c3c',
+    fontWeight: '500',
+  },
   resultsCount: {
     fontSize: 14,
     color: '#7f8c8d',
@@ -224,6 +331,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#7f8c8d',
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  clearFiltersButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  clearFiltersText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
   },
   emptyContainer: {
     flexGrow: 1,
