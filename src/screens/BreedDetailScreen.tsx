@@ -15,6 +15,8 @@ import { useDatabase } from '../context/DatabaseContext';
 import { CatBreed, getLifespanString, getWeightRangeString } from '../types/CatBreed';
 import { RootStackParamList } from '../types/navigation';
 import { AnimatedHeart } from '../components/AnimatedHeart';
+import { catImages } from '../assets/catPhotos/imageMap';
+
 
 type BreedDetailRouteProp = RouteProp<RootStackParamList, 'BreedDetail'>;
 type BreedDetailNavigationProp = StackNavigationProp<RootStackParamList, 'BreedDetail'>;
@@ -127,7 +129,7 @@ export default function BreedDetailScreen({ route }: Props) {
       {/* Header with Image */}
       <View style={styles.header}>
         <Image 
-          source={{ uri: `asset:///catPhotos/${breed.image_path}` }}
+          source={catImages[breed.image_path as keyof typeof catImages] || catImages['placeholder.jpg']}
           style={styles.breedImage}
           resizeMode="cover"
           defaultSource={require('../assets/catPhotos/placeholder.jpg')}

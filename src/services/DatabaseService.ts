@@ -251,11 +251,16 @@ export class DatabaseService {
 
   // Initialize with seed data
   async seedDatabase(): Promise<void> {
-    const existingBreeds = await this.getAllBreeds();
-    if (existingBreeds.length === 0) {
-      console.log('Seeding database with initial breed data...');
-      await this.populateInitialData();
-    }
+    // Temporarily force re-seeding
+    console.log('Force re-seeding database...');
+    
+    // Clear existing data
+    this.db.execSync('DELETE FROM breeds');
+    this.db.execSync('DELETE FROM favorites');
+    this.db.execSync('DELETE FROM search_history');
+    
+    // Re-seed with new data
+    await this.populateInitialData();
   }
 
   private async populateInitialData(): Promise<void> {

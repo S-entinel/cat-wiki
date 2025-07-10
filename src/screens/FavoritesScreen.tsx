@@ -6,6 +6,8 @@ import { useDatabase } from '../context/DatabaseContext';
 import { CatBreed, getLifespanString, getWeightRangeString } from '../types/CatBreed';
 import { RootTabParamList } from '../types/navigation';
 import { AnimatedHeart } from '../components/AnimatedHeart';
+import { catImages } from '../assets/catPhotos/imageMap';
+
 
 type FavoritesScreenNavigationProp = BottomTabNavigationProp<RootTabParamList, 'Favorites'>;
 
@@ -42,7 +44,7 @@ export default function FavoritesScreen() {
       onPress={() => handleBreedPress(item)}
     >
       <Image 
-        source={{ uri: `asset:///catPhotos/${item.image_path}` }}
+        source={catImages[item.image_path as keyof typeof catImages] || catImages['placeholder.jpg']}
         style={styles.breedImage}
         resizeMode="cover"
         defaultSource={require('../assets/catPhotos/placeholder.jpg')}

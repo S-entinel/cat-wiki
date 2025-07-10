@@ -18,6 +18,8 @@ import { RootStackParamList } from '../types/navigation';
 import { FilterDropdown } from '../components/FilterDropdown';
 import { SortDropdown, SortOption } from '../components/SortDropdown';
 import { AnimatedHeart } from '../components/AnimatedHeart';
+import { catImages } from '../assets/catPhotos/imageMap';
+
 
 type BreedsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'BreedsList'>;
 
@@ -203,7 +205,7 @@ export default function BreedsScreen({ navigation }: Props) {
         onPress={() => handleBreedPress(item)}
       >
         <Image 
-          source={{ uri: `asset:///catPhotos/${item.image_path}` }}
+          source={catImages[item.image_path as keyof typeof catImages] || catImages['placeholder.jpg']}
           style={styles.breedImage}
           resizeMode="cover"
           defaultSource={require('../assets/catPhotos/placeholder.jpg')}

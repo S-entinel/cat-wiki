@@ -1,3 +1,6 @@
+import { catImages } from '../assets/catPhotos/imageMap';
+
+
 export interface CatBreed {
   id?: number;
   tica_code: string;  // TICA breed code (e.g., "PER" for Persian)
@@ -89,7 +92,7 @@ export const convertToLegacyFormat = (breed: CatBreed): LegacyCatBreed => ({
   temperament: breed.temperament,
   lifespan: `${breed.lifespan_min}-${breed.lifespan_max} years`,
   description: breed.description,
-  image: { uri: `asset:///catPhotos/${breed.image_path}` }
+  image: catImages[breed.image_path as keyof typeof catImages] || catImages['placeholder.jpg']
 });
 
 export const getLifespanString = (breed: CatBreed): string => {
