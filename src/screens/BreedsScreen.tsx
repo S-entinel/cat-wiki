@@ -1,10 +1,20 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, TextInput, Image, Animated } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  TextInput, 
+  Image, 
+  Animated,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { catBreeds, CatBreed } from '../data/catBreeds';
+import { useDatabase } from '../context/DatabaseContext';
+import { CatBreed, BreedFilter, getLifespanString, getWeightRangeString } from '../types/CatBreed';
 import { RootStackParamList } from '../types/navigation';
-import { useFavorites } from '../context/FavoritesContext';
 import { FilterDropdown } from '../components/FilterDropdown';
 import { SortDropdown, SortOption } from '../components/SortDropdown';
 import { AnimatedHeart } from '../components/AnimatedHeart';
@@ -15,142 +25,131 @@ interface Props {
   navigation: BreedsScreenNavigationProp;
 }
 
-const SEARCH_HISTORY_KEY = '@cat_app_search_history';
-
 export default function BreedsScreen({ navigation }: Props) {
-  // State for search, filters, and sort
+  // Database context
+  const {
+    breeds,
+    isLoading,
+    error,
+    searchBreeds,
+    filterBreeds,
+    getSearchHistory,
+    addToSearchHistory,
+    getFilterOptions,
+    toggleFavorite,
+    isFavorite
+  } = useDatabase();
+
+  // Local state
   const [searchQuery, setSearchQuery] = useState('');
+  const [filteredBreeds, setFilteredBreeds] = useState<CatBreed[]>([]);
   const [selectedOrigin, setSelectedOrigin] = useState('');
-  const [selectedTemperament, setSelectedTemperament] = useState('');
+  const [selectedCoatLength, setSelectedCoatLength] = useState('');
+  const [selectedActivityLevel, setSelectedActivityLevel] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('name');
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Animation for the entire list
+  // Filter options
+  const [filterOptions, setFilterOptions] = useState({
+    origins: [] as string[],
+    coatLengths: [] as string[],
+    activityLevels: [] as string[],
+    bodyTypes: [] as string[]
+  });
+
+  // Animation for the list
   const fadeAnim = useMemo(() => new Animated.Value(1), []);
-  
-  const { toggleFavorite, isFavorite } = useFavorites();
 
-  // Load search history on component mount
+  // Load filter options and search history on mount
   useEffect(() => {
+    loadFilterOptions();
     loadSearchHistory();
   }, []);
 
+  // Update filtered breeds when data changes
+  useEffect(() => {
+    if (!isLoading && breeds.length > 0) {
+      applyFiltersAndSort();
+    }
+  }, [breeds, searchQuery, selectedOrigin, selectedCoatLength, selectedActivityLevel, sortBy, isLoading]);
+
+  const loadFilterOptions = async () => {
+    try {
+      const options = await getFilterOptions();
+      setFilterOptions(options);
+    } catch (err) {
+      console.error('Error loading filter options:', err);
+    }
+  };
+
   const loadSearchHistory = async () => {
     try {
-      const history = await AsyncStorage.getItem(SEARCH_HISTORY_KEY);
-      if (history) {
-        setSearchHistory(JSON.parse(history));
-      }
-    } catch (error) {
-      console.error('Error loading search history:', error);
+      const history = await getSearchHistory();
+      setSearchHistory(history);
+    } catch (err) {
+      console.error('Error loading search history:', err);
     }
   };
 
-  const saveSearchToHistory = async (query: string) => {
-    if (!query.trim() || query.length < 2) return;
-    
+  const applyFiltersAndSort = async () => {
     try {
-      const newHistory = [query, ...searchHistory.filter(item => item !== query)].slice(0, 5);
-      setSearchHistory(newHistory);
-      await AsyncStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(newHistory));
-    } catch (error) {
-      console.error('Error saving search history:', error);
+      setIsSearching(true);
+
+      const filter: BreedFilter = {
+        searchQuery: searchQuery.trim() || undefined,
+        origin: selectedOrigin || undefined,
+        coatLength: selectedCoatLength as any || undefined,
+        activityLevel: selectedActivityLevel as any || undefined
+      };
+
+      let results = await filterBreeds(filter);
+
+      // Apply sorting
+      results = [...results].sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'origin':
+            return a.origin.localeCompare(b.origin);
+          case 'lifespan':
+            return b.lifespan_max - a.lifespan_max; // Descending
+          case 'temperament':
+            return a.temperament.localeCompare(b.temperament);
+          default:
+            return 0;
+        }
+      });
+
+      setFilteredBreeds(results);
+
+      // Animate results change
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0.7,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+    } catch (err) {
+      console.error('Error applying filters:', err);
+      Alert.alert('Error', 'Failed to filter breeds');
+    } finally {
+      setIsSearching(false);
     }
   };
 
-  // Generate filter options from our breed data
-  const originOptions = useMemo(() => {
-    const uniqueOrigins = [...new Set(catBreeds.map(breed => breed.origin))];
-    return uniqueOrigins.sort().map(origin => ({ label: origin, value: origin }));
-  }, []);
-
-  const temperamentOptions = useMemo(() => {
-    const allTraits = catBreeds.flatMap(breed => 
-      breed.temperament.split(',').map(trait => trait.trim())
-    );
-    const uniqueTraits = [...new Set(allTraits)];
-    return uniqueTraits.sort().map(trait => ({ label: trait, value: trait }));
-  }, []);
-
-  // Helper function to parse lifespan for sorting
-  const parseLifespan = (lifespan: string): number => {
-    const match = lifespan.match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  };
-
-  // Apply all filters and sorting
-  const filteredAndSortedBreeds = useMemo(() => {
-    let filtered = catBreeds;
-
-    // Apply search filter
+  const handleSearchSubmit = async () => {
     if (searchQuery.trim()) {
-      filtered = filtered.filter(breed => 
-        breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        breed.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        breed.temperament.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Apply origin filter
-    if (selectedOrigin) {
-      filtered = filtered.filter(breed => breed.origin === selectedOrigin);
-    }
-
-    // Apply temperament filter
-    if (selectedTemperament) {
-      filtered = filtered.filter(breed => 
-        breed.temperament.toLowerCase().includes(selectedTemperament.toLowerCase())
-      );
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'origin':
-          return a.origin.localeCompare(b.origin);
-        case 'lifespan':
-          return parseLifespan(b.lifespan) - parseLifespan(a.lifespan); // Descending
-        case 'temperament':
-          return a.temperament.localeCompare(b.temperament);
-        default:
-          return 0;
-      }
-    });
-
-    return sorted;
-  }, [searchQuery, selectedOrigin, selectedTemperament, sortBy]);
-
-  // Animate when results change
-  useEffect(() => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 0.7,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [filteredAndSortedBreeds.length]);
-
-  const clearAllFilters = () => {
-    setSearchQuery('');
-    setSelectedOrigin('');
-    setSelectedTemperament('');
-    setSortBy('name');
-  };
-
-  const hasActiveFilters = searchQuery || selectedOrigin || selectedTemperament || sortBy !== 'name';
-
-  const handleSearchSubmit = () => {
-    if (searchQuery.trim()) {
-      saveSearchToHistory(searchQuery.trim());
+      await addToSearchHistory(searchQuery.trim());
+      await loadSearchHistory();
       setShowSearchHistory(false);
     }
   };
@@ -160,9 +159,28 @@ export default function BreedsScreen({ navigation }: Props) {
     setShowSearchHistory(false);
   };
 
+  const clearAllFilters = () => {
+    setSearchQuery('');
+    setSelectedOrigin('');
+    setSelectedCoatLength('');
+    setSelectedActivityLevel('');
+    setSortBy('name');
+  };
+
+  const hasActiveFilters = searchQuery || selectedOrigin || selectedCoatLength || selectedActivityLevel || sortBy !== 'name';
+
   const handleFavoritePress = async (breed: CatBreed, event: any) => {
     event.stopPropagation();
-    await toggleFavorite(breed);
+    if (breed.id) {
+      await toggleFavorite(breed.id);
+    }
+  };
+
+  const handleBreedPress = (breed: CatBreed) => {
+    navigation.navigate('BreedDetail', { 
+      breed, 
+      breedId: breed.id 
+    });
   };
 
   const renderBreed = ({ item, index }: { item: CatBreed; index: number }) => (
@@ -182,23 +200,30 @@ export default function BreedsScreen({ navigation }: Props) {
     >
       <TouchableOpacity 
         style={styles.breedCard}
-        onPress={() => navigation.navigate('BreedDetail', { breed: item })}
+        onPress={() => handleBreedPress(item)}
       >
         <Image 
-          source={item.image} 
+          source={{ uri: `${item.image_path}` }}
           style={styles.breedImage}
           resizeMode="cover"
+          defaultSource={require('../assets/catPhotos/placeholder.jpg')}
         />
         <View style={styles.breedInfo}>
           <Text style={styles.breedName}>{item.name}</Text>
           <Text style={styles.breedOrigin}>Origin: {item.origin}</Text>
+          <Text style={styles.breedDetails}>
+            {item.coat_length} • {item.activity_level} Activity
+          </Text>
+          <Text style={styles.breedLifespan}>
+            Lifespan: {getLifespanString(item)}
+          </Text>
           <Text style={styles.breedTemperament} numberOfLines={2}>
             {item.temperament}
           </Text>
         </View>
         
         <AnimatedHeart
-          isFavorite={isFavorite(item.id)}
+          isFavorite={item.id ? isFavorite(item.id) : false}
           onPress={() => handleFavoritePress(item, { stopPropagation: () => {} })}
         />
       </TouchableOpacity>
@@ -234,9 +259,32 @@ export default function BreedsScreen({ navigation }: Props) {
     </View>
   );
 
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text style={styles.loadingText}>Loading cat breeds...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>😿 {error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => window.location.reload()}
+        >
+          <Text style={styles.retryButtonText}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Cat Breeds</Text>
+      <Text style={styles.title}>Cat Breeds ({filteredBreeds.length})</Text>
       
       {/* Search Input */}
       <View style={styles.searchContainer}>
@@ -252,17 +300,22 @@ export default function BreedsScreen({ navigation }: Props) {
           autoCorrect={false}
           returnKeyType="search"
         />
-        {searchQuery.length > 0 && (
+        {(searchQuery.length > 0 || isSearching) && (
           <TouchableOpacity 
             style={styles.clearButton}
             onPress={() => setSearchQuery('')}
+            disabled={isSearching}
           >
-            <Text style={styles.clearButtonText}>✕</Text>
+            {isSearching ? (
+              <ActivityIndicator size="small" color="#7f8c8d" />
+            ) : (
+              <Text style={styles.clearButtonText}>✕</Text>
+            )}
           </TouchableOpacity>
         )}
         
         {/* Search History Dropdown */}
-        {showSearchHistory && (
+        {showSearchHistory && searchHistory.length > 0 && (
           <View style={styles.searchHistoryContainer}>
             <FlatList
               data={searchHistory}
@@ -279,56 +332,54 @@ export default function BreedsScreen({ navigation }: Props) {
         <View style={styles.filtersContainer}>
           <FilterDropdown
             title="Origin"
-            options={originOptions}
+            options={filterOptions.origins.map(origin => ({ label: origin, value: origin }))}
             selectedValue={selectedOrigin}
             onSelect={setSelectedOrigin}
             placeholder="All Origins"
           />
           <FilterDropdown
-            title="Temperament"
-            options={temperamentOptions}
-            selectedValue={selectedTemperament}
-            onSelect={setSelectedTemperament}
-            placeholder="All Traits"
+            title="Coat"
+            options={filterOptions.coatLengths.map(length => ({ label: length, value: length }))}
+            selectedValue={selectedCoatLength}
+            onSelect={setSelectedCoatLength}
+            placeholder="All Coats"
+          />
+          <FilterDropdown
+            title="Activity"
+            options={filterOptions.activityLevels.map(level => ({ label: level, value: level }))}
+            selectedValue={selectedActivityLevel}
+            onSelect={setSelectedActivityLevel}
+            placeholder="All Levels"
           />
         </View>
+        
         <SortDropdown
           selectedSort={sortBy}
           onSortChange={setSortBy}
         />
       </View>
 
-      {/* Active Filters Indicator */}
+      {/* Clear Filters Button */}
       {hasActiveFilters && (
-        <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>
-            Active: 
-            {searchQuery && ` Search`}
-            {selectedOrigin && ` Origin`}
-            {selectedTemperament && ` Temperament`}
-            {sortBy !== 'name' && ` Sort`}
-          </Text>
-          <TouchableOpacity onPress={clearAllFilters}>
-            <Text style={styles.clearAllText}>Clear All</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.clearAllFiltersButton}
+          onPress={clearAllFilters}
+        >
+          <Text style={styles.clearAllFiltersText}>Clear All Filters</Text>
+        </TouchableOpacity>
       )}
 
-      {/* Results count */}
-      <Text style={styles.resultsCount}>
-        {filteredAndSortedBreeds.length} breed{filteredAndSortedBreeds.length !== 1 ? 's' : ''} found
-      </Text>
-
-      <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
-        <FlatList
-          data={filteredAndSortedBreeds}
-          renderItem={renderBreed}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={filteredAndSortedBreeds.length === 0 ? styles.emptyContainer : undefined}
-        />
-      </Animated.View>
+      {/* Breeds List */}
+      <FlatList
+        data={filteredBreeds}
+        renderItem={renderBreed}
+        keyExtractor={(item) => item.id?.toString() || item.tica_code}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={renderEmptyState}
+        contentContainerStyle={filteredBreeds.length === 0 ? styles.emptyContainer : styles.listContainer}
+        refreshing={isSearching}
+        onRefresh={applyFiltersAndSort}
+      />
     </View>
   );
 }
@@ -346,15 +397,50 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     textAlign: 'center',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#7f8c8d',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#e74c3c',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '500',
+  },
   searchContainer: {
-    marginBottom: 16,
     position: 'relative',
+    marginBottom: 16,
   },
   searchInput: {
     backgroundColor: 'white',
     borderRadius: 12,
-    padding: 16,
-    paddingRight: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     borderWidth: 1,
     borderColor: '#e1e8ed',
@@ -367,28 +453,26 @@ const styles = StyleSheet.create({
   clearButton: {
     position: 'absolute',
     right: 12,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    backgroundColor: '#e74c3c',
-    borderRadius: 12,
+    top: 12,
     width: 24,
     height: 24,
     justifyContent: 'center',
     alignItems: 'center',
   },
   clearButtonText: {
-    color: 'white',
     fontSize: 14,
+    color: '#7f8c8d',
     fontWeight: 'bold',
   },
   searchHistoryContainer: {
     position: 'absolute',
-    top: '100%',
+    top: 50,
     left: 0,
     right: 0,
     backgroundColor: 'white',
     borderRadius: 12,
-    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#e1e8ed',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -397,17 +481,17 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   searchHistoryList: {
-    maxHeight: 200,
+    maxHeight: 150,
   },
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
+    borderBottomColor: '#f1f2f6',
   },
   historyIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 8,
     color: '#7f8c8d',
   },
@@ -418,37 +502,25 @@ const styles = StyleSheet.create({
   controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   filtersContainer: {
     flex: 1,
     flexDirection: 'row',
     gap: 8,
   },
-  activeFiltersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#e3f2fd',
-    padding: 8,
+  clearAllFiltersButton: {
+    backgroundColor: '#e74c3c',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
-    marginBottom: 8,
-  },
-  activeFiltersText: {
-    fontSize: 12,
-    color: '#3498db',
-    fontWeight: '500',
-  },
-  clearAllText: {
-    fontSize: 12,
-    color: '#e74c3c',
-    fontWeight: '500',
-  },
-  resultsCount: {
-    fontSize: 14,
-    color: '#7f8c8d',
     marginBottom: 12,
-    textAlign: 'center',
+    alignSelf: 'center',
+  },
+  clearAllFiltersText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '500',
   },
   breedCardContainer: {
     marginBottom: 12,
@@ -466,9 +538,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   breedImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     marginRight: 16,
   },
   breedInfo: {
@@ -485,6 +557,16 @@ const styles = StyleSheet.create({
     color: '#7f8c8d',
     marginBottom: 2,
   },
+  breedDetails: {
+    fontSize: 12,
+    color: '#95a5a6',
+    marginBottom: 2,
+  },
+  breedLifespan: {
+    fontSize: 12,
+    color: '#95a5a6',
+    marginBottom: 4,
+  },
   breedTemperament: {
     fontSize: 14,
     color: '#3498db',
@@ -493,7 +575,8 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 60,
+    paddingHorizontal: 20,
   },
   emptyStateText: {
     fontSize: 16,
@@ -503,8 +586,8 @@ const styles = StyleSheet.create({
   },
   clearFiltersButton: {
     backgroundColor: '#3498db',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   clearFiltersText: {
@@ -515,5 +598,8 @@ const styles = StyleSheet.create({
   emptyContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+  },
+  listContainer: {
+    paddingBottom: 20,
   },
 });

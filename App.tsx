@@ -1,11 +1,13 @@
 import React from 'react';
+import { StatusBar } from 'expo-status-bar';
 import AppNavigator from './src/navigation/AppNavigator';
-import { FavoritesProvider } from './src/context/FavoritesContext';
+import { DatabaseProvider } from './src/context/DatabaseContext';
 
 export default function App() {
   return (
-    <FavoritesProvider>
+    <DatabaseProvider>
       <AppNavigator />
-    </FavoritesProvider>
+      <StatusBar style="auto" />
+    </DatabaseProvider>
   );
 }
