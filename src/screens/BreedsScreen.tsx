@@ -203,7 +203,7 @@ export default function BreedsScreen({ navigation }: Props) {
         onPress={() => handleBreedPress(item)}
       >
         <Image 
-          source={{ uri: `${item.image_path}` }}
+          source={{ uri: `asset:///catPhotos/${item.image_path}` }}
           style={styles.breedImage}
           resizeMode="cover"
           defaultSource={require('../assets/catPhotos/placeholder.jpg')}

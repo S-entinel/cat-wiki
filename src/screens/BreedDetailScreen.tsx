@@ -1,3 +1,4 @@
+// src/screens/BreedDetailScreen.tsx
 import React, { useState, useEffect } from 'react';
 import { 
   StyleSheet, 
@@ -126,7 +127,7 @@ export default function BreedDetailScreen({ route }: Props) {
       {/* Header with Image */}
       <View style={styles.header}>
         <Image 
-          source={{ uri: `asset:///${breed.image_path}` }}
+          source={{ uri: `asset:///catPhotos/${breed.image_path}` }}
           style={styles.breedImage}
           resizeMode="cover"
           defaultSource={require('../assets/catPhotos/placeholder.jpg')}

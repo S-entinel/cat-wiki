@@ -21,7 +21,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient breed with a distinctive ticked coat that gives them a wild appearance. Extremely active cats that love to explore high places and investigate everything around them.',
     care_requirements: 'Regular playtime, tall cat trees, puzzle toys for mental stimulation',
     ideal_for: 'Active families, experienced cat owners who can provide mental stimulation',
-    image_path: 'src/assets/catPhotos/abyssinian.jpg'
+    image_path: 'abyssinian.jpg'
   },
   {
     tica_code: 'ASH',
@@ -43,7 +43,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Classic American breed known for their round faces and sturdy build. They are excellent family cats with moderate activity levels and easy-going personalities.',
     care_requirements: 'Regular brushing during shedding season, balanced diet, moderate exercise',
     ideal_for: 'Families with children, first-time cat owners, seniors',
-    image_path: 'src/assets/catPhotos/american-shorthair.jpg'
+    image_path: 'american-shorthair.jpg'
   },
   {
     tica_code: 'BEN',
@@ -65,7 +65,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Wild-looking cats with leopard-like spots or marbled patterns. They are highly active, love to climb and play, and often enjoy water.',
     care_requirements: 'Extensive playtime, climbing structures, puzzle feeders, possible leash training',
     ideal_for: 'Very active families, experienced cat owners, those who enjoy interactive pets',
-    image_path: 'src/assets/catPhotos/bengal.jpg'
+    image_path: 'bengal.jpg'
   },
   {
     tica_code: 'BIR',
@@ -87,7 +87,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Sacred cats of Burma with beautiful color-point coats and distinctive white gloves on their paws. They are calm and make excellent lap cats.',
     care_requirements: 'Regular brushing, moderate playtime, quiet environment',
     ideal_for: 'Seniors, quiet households, those wanting a calm companion',
-    image_path: 'src/assets/catPhotos/birman.jpg'
+    image_path: 'birman.jpg'
   },
   {
     tica_code: 'BSH',
@@ -109,7 +109,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Sturdy cats with round faces and dense coats. Known for their "Cheshire Cat" smile and easy-going, independent nature.',
     care_requirements: 'Diet monitoring to prevent obesity, regular but gentle exercise, minimal grooming',
     ideal_for: 'Busy professionals, those wanting an independent cat, apartment living',
-    image_path: 'src/assets/catPhotos/british-shorthair.jpg'
+    image_path: 'british-shorthair.jpg'
   },
   {
     tica_code: 'BUR',
@@ -131,7 +131,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Compact, muscular cats with golden eyes and silky coats. They are known for their dog-like devotion to their owners and social nature.',
     care_requirements: 'Social interaction, playtime, mental stimulation, regular health checkups',
     ideal_for: 'Social families, those wanting an interactive pet, households with other pets',
-    image_path: 'src/assets/catPhotos/burmese.jpg'
+    image_path: 'burmese.jpg'
   },
   {
     tica_code: 'CHA',
@@ -153,7 +153,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient French breed with a distinctive blue-gray coat and orange or copper eyes. Known for their quiet, gentle nature and loyalty to their families.',
     care_requirements: 'Regular brushing during shedding, moderate exercise, quiet environment',
     ideal_for: 'Quiet households, seniors, those wanting a loyal but independent cat',
-    image_path: 'src/assets/catPhotos/chartreux.jpg'
+    image_path: 'chartreux.jpg'
   },
   {
     tica_code: 'COR',
@@ -175,7 +175,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Distinctive cats with curly coats and slender builds. They are very active, playful, and often described as having dog-like personalities.',
     care_requirements: 'High activity needs, warm environment, gentle skin care, interactive toys',
     ideal_for: 'Active families, those with allergies (less shedding), experienced cat owners',
-    image_path: 'src/assets/catPhotos/cornish-rex.jpg'
+    image_path: 'cornish-rex.jpg'
   },
   {
     tica_code: 'DEV',
@@ -197,7 +197,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Pixie-like cats with large ears and curly coats. Known for their mischievous nature and strong desire to be involved in everything their humans do.',
     care_requirements: 'High interaction needs, warm environment, regular ear cleaning, secure environment',
     ideal_for: 'Interactive families, those wanting a "people cat", experienced owners',
-    image_path: 'src/assets/catPhotos/devon-rex.jpg'
+    image_path: 'devon-rex.jpg'
   },
   {
     tica_code: 'EGY',
@@ -219,7 +219,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient breed and the only naturally spotted domestic cat. They are extremely fast runners and can be shy with strangers but loyal to their families.',
     care_requirements: 'Secure outdoor access or large indoor space, patience for socialization, climbing structures',
     ideal_for: 'Experienced cat owners, those who appreciate rare breeds, active households',
-    image_path: 'src/assets/catPhotos/egyptian-mau.jpg'
+    image_path: 'egyptian-mau.jpg'
   },
   {
     tica_code: 'EUR',
@@ -241,7 +241,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Natural European breed that developed without human intervention. They are well-balanced cats with excellent health and adaptable personalities.',
     care_requirements: 'Moderate exercise, regular health checkups, balanced diet',
     ideal_for: 'Any household, first-time owners, those wanting a healthy breed',
-    image_path: 'src/assets/catPhotos/european-shorthair.jpg'
+    image_path: 'european-shorthair.jpg'
   },
   {
     tica_code: 'EXO',
@@ -263,7 +263,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Often called the "lazy Persian," these cats have the Persian temperament in a short-haired package. They are calm, gentle, and make excellent lap cats.',
     care_requirements: 'Daily face cleaning, moderate exercise, climate control, regular vet checkups',
     ideal_for: 'Indoor households, seniors, those wanting Persian traits without grooming needs',
-    image_path: 'src/assets/catPhotos/exotic-shorthair.jpg'
+    image_path: 'exotic-shorthair.jpg'
   },
   {
     tica_code: 'JBT',
@@ -285,7 +285,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient Japanese breed known for their distinctive "pom-pom" tail and tricolor coat. They are very social, vocal cats that love to "talk" to their owners.',
     care_requirements: 'High social interaction, mental stimulation, regular playtime',
     ideal_for: 'Interactive families, those who enjoy vocal cats, multi-pet households',
-    image_path: 'src/assets/catPhotos/japanese-bobtail.jpg'
+    image_path: 'japanese-bobtail.jpg'
   },
   {
     tica_code: 'KOR',
@@ -307,7 +307,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient Thai breed considered a symbol of good luck. They have beautiful silver-blue coats and are known for their gentle, affectionate nature.',
     care_requirements: 'Gentle handling, quiet environment, moderate exercise, consistent routine',
     ideal_for: 'Quiet households, seniors, those wanting a gentle companion',
-    image_path: 'src/assets/catPhotos/korat.jpg'
+    image_path: 'korat.jpg'
   },
   {
     tica_code: 'LPL',
@@ -351,7 +351,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Large, gentle giants with tufted ears and bushy tails. They are known for their dog-like personalities, intelligence, and unusual love of water.',
     care_requirements: 'Daily brushing, large spaces, mental stimulation, regular health screening',
     ideal_for: 'Families with space, those wanting large cats, experienced owners',
-    image_path: 'src/assets/catPhotos/maine-coon.jpg'
+    image_path: 'maine-coon.jpg'
   },
   {
     tica_code: 'MAN',
@@ -373,7 +373,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Known for being tailless or having very short tails due to a genetic mutation. They are loyal, calm cats that can be quite protective of their families.',
     care_requirements: 'Regular health monitoring, gentle handling, moderate exercise',
     ideal_for: 'Experienced owners, those wanting unique cats, families seeking loyal pets',
-    image_path: 'src/assets/catPhotos/manx.jpg'
+    image_path: 'manx.jpg'
   },
   {
     tica_code: 'NFO',
@@ -395,7 +395,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Large, long-haired cats built for cold climates. They have waterproof double coats and are excellent climbers with a gentle, independent nature.',
     care_requirements: 'Regular brushing, climbing structures, outdoor access or large indoor space',
     ideal_for: 'Those with space, families with children, people wanting independent cats',
-    image_path: 'src/assets/catPhotos/norwegian-forest.jpg'
+    image_path: 'norwegian-forest.jpg'
   },
   {
     tica_code: 'OCI',
@@ -417,7 +417,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Wild-looking spotted cats that are completely domestic. They are very social, active cats that often can be leash-trained and enjoy dog-like activities.',
     care_requirements: 'High activity needs, social interaction, mental challenges, possible leash training',
     ideal_for: 'Very active families, those wanting dog-like cats, experienced owners',
-    image_path: 'src/assets/catPhotos/ocicat.jpg'
+    image_path: 'ocicat.jpg'
   },
   {
     tica_code: 'ORI',
@@ -439,7 +439,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Sleek, elegant cats related to the Siamese. They come in many colors and patterns and are known for their large ears, slender build, and vocal nature.',
     care_requirements: 'High social interaction, mental stimulation, warm environment, vocal engagement',
     ideal_for: 'Interactive families, those who enjoy vocal cats, experienced cat owners',
-    image_path: 'src/assets/catPhotos/oriental-shorthair.jpg'
+    image_path: 'oriental-shorthair.jpg'
   },
   {
     tica_code: 'PER',
@@ -461,7 +461,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Known for their long, luxurious coats and sweet personalities. Persians are laid-back cats that prefer a serene, indoor environment.',
     care_requirements: 'Daily grooming, eye cleaning, climate control, indoor living, regular vet care',
     ideal_for: 'Indoor households, those who enjoy grooming, seniors, quiet environments',
-    image_path: 'src/assets/catPhotos/persian.jpg'
+    image_path: 'persian.jpg'
   },
   {
     tica_code: 'RAG',
@@ -483,7 +483,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Large, semi-long haired cats that go limp when picked up, hence the name. They are known for their blue eyes, docile nature, and color-point coats.',
     care_requirements: 'Regular brushing, indoor living, gentle handling, moderate exercise',
     ideal_for: 'Families with children, seniors, those wanting gentle giant cats',
-    image_path: 'src/assets/catPhotos/ragdoll.jpg'
+    image_path: 'ragdoll.jpg'
   },
   {
     tica_code: 'RUS',
@@ -505,7 +505,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Elegant cats with silvery-blue coats and bright green eyes. They are shy with strangers but form deep bonds with their families.',
     care_requirements: 'Quiet environment, consistent routine, patient socialization, moderate exercise',
     ideal_for: 'Quiet households, singles or couples, those wanting loyal companions',
-    image_path: 'src/assets/catPhotos/russian-blue.jpg'
+    image_path: 'russian-blue.jpg'
   },
   {
     tica_code: 'SFO',
@@ -527,7 +527,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Known for their unique folded ears that give them an owl-like appearance. They are gentle cats that get along well with children and other pets.',
     care_requirements: 'Regular health monitoring, gentle exercise, ear care, joint care',
     ideal_for: 'Families with children, seniors, those wanting unique-looking cats',
-    image_path: 'src/assets/catPhotos/scottish-fold.jpg'
+    image_path: 'scottish-fold.jpg'
   },
   {
     tica_code: 'SIA',
@@ -549,7 +549,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Elegant cats known for their distinctive color points and blue eyes. They are very vocal and form extremely strong bonds with their owners.',
     care_requirements: 'High social interaction, mental stimulation, vocal engagement, warm environment',
     ideal_for: 'Interactive families, those who enjoy vocal cats, experienced owners',
-    image_path: 'src/assets/catPhotos/siamese.jpg'
+    image_path: 'siamese.jpg'
   },
   {
     tica_code: 'SIB',
@@ -571,7 +571,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Large, powerful cats from Russia with thick, water-resistant coats. They are gentle giants that often produce less of the Fel d1 allergen.',
     care_requirements: 'Regular brushing, climbing structures, moderate exercise, cold weather tolerance',
     ideal_for: 'Those with mild allergies, families with children, cold climates',
-    image_path: 'src/assets/catPhotos/siberian.jpg'
+    image_path: 'siberian.jpg'
   },
   {
     tica_code: 'SIN',
@@ -593,7 +593,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'One of the smallest cat breeds with distinctive ticked coats and large eyes. They are curious, active cats that love to explore and climb.',
     care_requirements: 'Warm environment, climbing structures, mental stimulation, gentle handling',
     ideal_for: 'Apartment living, those wanting small cats, interactive families',
-    image_path: 'src/assets/catPhotos/singapura.jpg'
+    image_path: 'singapura.jpg'
   },
   {
     tica_code: 'SOM',
@@ -615,7 +615,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Long-haired version of the Abyssinian with a distinctive ticked coat and fox-like tail. They are very active, intelligent cats that love to climb and explore.',
     care_requirements: 'High activity needs, climbing structures, regular brushing, mental stimulation',
     ideal_for: 'Active families, experienced owners, those who enjoy interactive pets',
-    image_path: 'src/assets/catPhotos/somali.jpg'
+    image_path: '/somali.jpg'
   },
   {
     tica_code: 'SPH',
@@ -637,7 +637,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Hairless cats known for their wrinkled skin and large ears. Despite their alien appearance, they are warm, affectionate companions that seek heat.',
     care_requirements: 'Regular bathing, sun protection, warm environment, skin care, high-quality diet',
     ideal_for: 'Those with cat allergies, interactive families, experienced owners',
-    image_path: 'src/assets/catPhotos/sphynx.jpg'
+    image_path: 'sphynx.jpg'
   },
   {
     tica_code: 'TON',
@@ -659,7 +659,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'A cross between Siamese and Burmese breeds, combining the best traits of both. They are social, active cats that love interaction and play.',
     care_requirements: 'High social interaction, mental stimulation, playtime, companion animals',
     ideal_for: 'Active families, multi-pet households, those wanting interactive cats',
-    image_path: 'src/assets/catPhotos/tonkinese.jpg'
+    image_path: 'tonkinese.jpg'
   },
   {
     tica_code: 'TUR',
@@ -681,7 +681,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Ancient Turkish breed with silky, semi-long coats and graceful movements. They are intelligent, active cats that love to be the center of attention.',
     care_requirements: 'Regular brushing, mental stimulation, climbing structures, social interaction',
     ideal_for: 'Experienced owners, active households, those wanting elegant cats',
-    image_path: 'src/assets/catPhotos/turkish-angora.jpg'
+    image_path: 'turkish-angora.jpg'
   },
   {
     tica_code: 'TUV',
@@ -703,6 +703,6 @@ export const ticaBreedsData: CreateCatBreed[] = [
     description: 'Known as the "swimming cat" for their love of water. They have distinctive van pattern markings and are large, active cats with independent personalities.',
     care_requirements: 'Water access for play, large spaces, climbing structures, regular exercise',
     ideal_for: 'Experienced owners, those with pools/water features, active households',
-    image_path: 'src/assets/catPhotos/turkish-van.jpg'
+    image_path: 'turkish-van.jpg'
   }
 ];
