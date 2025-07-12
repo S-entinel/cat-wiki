@@ -1125,7 +1125,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     image_path: 'snowshoe.jpg'
   },
   {
-    tica_code: 'SRL',
+    tica_code: 'SCS',
     name: 'Scottish Straight',
     origin: 'Scotland',
     coat_length: 'Short',
@@ -1477,7 +1477,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     image_path: 'savannah.jpg'
   },
   {
-    tica_code: 'SRL',
+    tica_code: 'SER',
     name: 'Serengeti',
     origin: 'United States',
     coat_length: 'Short',
@@ -1565,7 +1565,7 @@ export const ticaBreedsData: CreateCatBreed[] = [
     image_path: 'brazilian-shorthair.jpg'
   },
   {
-    tica_code: 'CHA',
+    tica_code: 'CHU',
     name: 'Chausie',
     origin: 'United States',
     coat_length: 'Short',
