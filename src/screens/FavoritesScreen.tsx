@@ -1,13 +1,28 @@
+// src/screens/FavoritesScreen.tsx
 import React from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, ActivityIndicator, Image } from 'react-native';
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Image,
+  Dimensions 
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useDatabase } from '../context/DatabaseContext';
 import { CatBreed, getLifespanString, getWeightRangeString } from '../types/CatBreed';
 import { RootTabParamList } from '../types/navigation';
 import { AnimatedHeart } from '../components/AnimatedHeart';
+import { Card } from '../components/common/Card';
+import { Badge } from '../components/common/Badge';
+import { Button } from '../components/common/Button';
 import { catImages } from '../assets/catPhotos/imageMap';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 
+const { width: screenWidth } = Dimensions.get('window');
 
 type FavoritesScreenNavigationProp = BottomTabNavigationProp<RootTabParamList, 'Favorites'>;
 
@@ -38,77 +53,125 @@ export default function FavoritesScreen() {
     });
   };
 
+  const handleExploreBreeds = () => {
+    navigation.navigate('Breeds');
+  };
+
+  const getActivityLevelColor = (level: string) => {
+    switch (level) {
+      case 'Low': return 'success';
+      case 'Low-Medium': return 'warning';
+      case 'Medium': return 'accent';
+      case 'Medium-High': return 'secondary';
+      case 'High': return 'error';
+      default: return 'primary';
+    }
+  };
+
   const renderBreed = ({ item }: { item: CatBreed }) => (
-    <TouchableOpacity 
-      style={styles.breedCard}
-      onPress={() => handleBreedPress(item)}
-    >
-      <Image 
-        source={catImages[item.image_path as keyof typeof catImages] || catImages['placeholder.jpg']}
-        style={styles.breedImage}
-        resizeMode="cover"
-        defaultSource={require('../assets/catPhotos/placeholder.jpg')}
-      />
-      <View style={styles.breedInfo}>
-        <View style={styles.breedHeader}>
-          <Text style={styles.breedName}>{item.name}</Text>
-          <View style={styles.ticaCodeBadge}>
-            <Text style={styles.ticaCodeText}>{item.tica_code}</Text>
+    <Card style={styles.breedCard} variant="elevated">
+      <TouchableOpacity 
+        style={styles.breedCardContent}
+        onPress={() => handleBreedPress(item)}
+        activeOpacity={0.7}
+      >
+        {/* Breed Image */}
+        <View style={styles.imageContainer}>
+          <Image 
+            source={catImages[item.image_path as keyof typeof catImages] || catImages['placeholder.jpg']}
+            style={styles.breedImage}
+            resizeMode="cover"
+            defaultSource={require('../assets/catPhotos/placeholder.jpg')}
+          />
+          <View style={styles.favoriteButtonContainer}>
+            <AnimatedHeart
+              isFavorite={item.id ? isFavorite(item.id) : false}
+              onPress={(event) => handleFavoritePress(item, event)}
+            />
           </View>
         </View>
-        
-        <Text style={styles.breedOrigin}>📍 {item.origin}</Text>
-        
-        <View style={styles.breedDetails}>
-          <Text style={styles.detailItem}>🧬 {item.coat_length}</Text>
-          <Text style={styles.detailItem}>⚡ {item.activity_level}</Text>
-          <Text style={styles.detailItem}>✂️ {item.grooming_needs}</Text>
+
+        {/* Breed Information */}
+        <View style={styles.breedInfo}>
+          <View style={styles.breedHeader}>
+            <Text style={styles.breedName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Badge 
+              text={item.tica_code} 
+              variant="error" 
+              size="sm"
+              style={styles.ticaBadge}
+            />
+          </View>
+
+          <Text style={styles.breedOrigin}>📍 {item.origin}</Text>
+
+          <View style={styles.breedDetails}>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Coat:</Text>
+              <Text style={styles.detailValue}>{item.coat_length}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Activity:</Text>
+              <Badge 
+                text={item.activity_level} 
+                variant={getActivityLevelColor(item.activity_level) as any}
+                size="sm"
+              />
+            </View>
+          </View>
+
+          <View style={styles.statsRow}>
+            <Text style={styles.statText}>
+              ⏰ {getLifespanString(item)}
+            </Text>
+            <Text style={styles.statText}>
+              ⚖️ {getWeightRangeString(item)}
+            </Text>
+          </View>
+
+          <Text style={styles.breedTemperament} numberOfLines={2}>
+            {item.temperament}
+          </Text>
         </View>
-        
-        <Text style={styles.breedLifespan}>
-          ⏰ {getLifespanString(item)} • ⚖️ {getWeightRangeString(item)}
-        </Text>
-        
-        <Text style={styles.breedTemperament} numberOfLines={2}>
-          😸 {item.temperament}
-        </Text>
-      </View>
-      
-      <AnimatedHeart
-        isFavorite={item.id ? isFavorite(item.id) : false}
-        onPress={() => handleFavoritePress(item, { stopPropagation: () => {} })}
-        style={styles.favoriteButton}
-      />
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Card>
   );
 
   const renderEmptyState = () => (
     <View style={styles.emptyStateContainer}>
-      <Text style={styles.emptyStateEmoji}>💔</Text>
-      <Text style={styles.emptyStateTitle}>No Favorites Yet</Text>
-      <Text style={styles.emptyStateText}>
-        Start exploring cat breeds and tap the heart icon to add them to your favorites!
-      </Text>
-      <TouchableOpacity 
-        style={styles.exploreButton}
-        onPress={() => (navigation as any).navigate('Breeds')}
-      >
-        <Text style={styles.exploreButtonText}>Explore Breeds</Text>
-      </TouchableOpacity>
+      <View style={styles.emptyStateContent}>
+        <Text style={styles.emptyStateEmoji}>💔</Text>
+        <Text style={styles.emptyStateTitle}>No Favorites Yet</Text>
+        <Text style={styles.emptyStateText}>
+          Start exploring cat breeds and tap the heart icon to save your favorites here!
+        </Text>
+        <Button
+          title="Explore Breeds"
+          onPress={handleExploreBreeds}
+          variant="primary"
+          size="lg"
+          leftIcon={<Text style={styles.buttonIcon}>🔍</Text>}
+          style={styles.exploreButton}
+        />
+      </View>
     </View>
   );
 
   const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.title}>❤️ My Favorites</Text>
+    <View style={styles.headerSection}>
+      <Text style={styles.screenTitle}>My Favorites</Text>
       {favorites.length > 0 && (
         <View style={styles.statsContainer}>
           <Text style={styles.favoritesCount}>
-            {favorites.length} favorite breed{favorites.length !== 1 ? 's' : ''}
+            {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
           </Text>
           <Text style={styles.statsText}>
-            {favorites.filter(breed => breed.activity_level === 'High').length} high-energy • {' '}
-            {favorites.filter(breed => breed.grooming_needs === 'Low').length} low-maintenance
+            {favorites.length === 1 
+              ? 'You have one favorite breed' 
+              : `You've collected ${favorites.length} favorite breeds`
+            }
           </Text>
         </View>
       )}
@@ -118,7 +181,7 @@ export default function FavoritesScreen() {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#e74c3c" />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading your favorites...</Text>
       </View>
     );
@@ -127,21 +190,24 @@ export default function FavoritesScreen() {
   if (error) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>😿 {error}</Text>
-        <TouchableOpacity 
-          style={styles.retryButton}
+        <Text style={styles.errorEmoji}>😿</Text>
+        <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button
+          title="Try Again"
           onPress={handleRetry}
-        >
-          <Text style={styles.retryButtonText}>Try Again</Text>
-        </TouchableOpacity>
+          variant="primary"
+        />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       {renderHeader()}
-      
+
+      {/* Favorites List */}
       <FlatList
         data={favorites}
         renderItem={renderBreed}
@@ -149,6 +215,7 @@ export default function FavoritesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
         contentContainerStyle={favorites.length === 0 ? styles.emptyContainer : styles.listContainer}
+        numColumns={1}
       />
     </View>
   );
@@ -157,186 +224,208 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.background,
   },
-  header: {
-    padding: 20,
-    paddingBottom: 10,
+  
+  // Header
+  headerSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.lg,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    textAlign: 'center',
-    marginBottom: 12,
+  screenTitle: {
+    fontSize: Typography.fontSize.xxxl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.sm,
   },
   statsContainer: {
     alignItems: 'center',
   },
   favoritesCount: {
-    fontSize: 16,
-    color: '#e74c3c',
-    fontWeight: '600',
-    marginBottom: 4,
+    fontSize: Typography.fontSize.lg,
+    color: Colors.error,
+    fontWeight: Typography.fontWeight.bold,
+    marginBottom: Spacing.xs,
   },
   statsText: {
-    fontSize: 14,
-    color: '#7f8c8d',
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
     textAlign: 'center',
+    fontWeight: Typography.fontWeight.medium,
   },
+  
+  // Loading and Error States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.lg,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 16,
-    color: '#7f8c8d',
+    marginTop: Spacing.md,
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    padding: 20,
+    backgroundColor: Colors.background,
+    paddingHorizontal: Spacing.lg,
+  },
+  errorEmoji: {
+    fontSize: 64,
+    marginBottom: Spacing.lg,
+  },
+  errorTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   errorText: {
-    fontSize: 18,
-    color: '#e74c3c',
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
   },
-  retryButton: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
+  
+  // Breed Cards
   breedCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginHorizontal: 20,
-    marginBottom: 16,
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    overflow: 'hidden',
+  },
+  breedCardContent: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+  },
+  imageContainer: {
+    position: 'relative',
   },
   breedImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    marginRight: 16,
+    width: 120,
+    height: 120,
+    borderRadius: BorderRadius.md,
+  },
+  favoriteButtonContainer: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.full,
+    padding: Spacing.xs,
+    ...Shadows.sm,
   },
   breedInfo: {
     flex: 1,
+    paddingLeft: Spacing.lg,
+    justifyContent: 'space-between',
   },
   breedHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm,
   },
   breedName: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
     flex: 1,
+    marginRight: Spacing.sm,
   },
-  ticaCodeBadge: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginLeft: 8,
-  },
-  ticaCodeText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: 'bold',
+  ticaBadge: {
+    marginLeft: Spacing.sm,
   },
   breedOrigin: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginBottom: 8,
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.sm,
+    fontWeight: Typography.fontWeight.medium,
   },
   breedDetails: {
+    marginBottom: Spacing.sm,
+  },
+  detailRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8,
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
-  detailItem: {
-    fontSize: 12,
-    color: '#95a5a6',
-    marginRight: 12,
-    marginBottom: 4,
+  detailLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+    minWidth: 50,
   },
-  breedLifespan: {
-    fontSize: 13,
-    color: '#3498db',
-    marginBottom: 8,
+  detailValue: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+    marginLeft: Spacing.sm,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  statText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
   },
   breedTemperament: {
-    fontSize: 14,
-    color: '#27ae60',
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text,
+    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
     fontStyle: 'italic',
-    lineHeight: 18,
   },
-  favoriteButton: {
-    marginLeft: 8,
-    marginTop: 4,
-  },
+  
+  // Empty State
   emptyStateContainer: {
-    alignItems: 'center',
+    flex: 1,
     justifyContent: 'center',
-    paddingVertical: 80,
-    paddingHorizontal: 40,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+  },
+  emptyStateContent: {
+    alignItems: 'center',
+    maxWidth: 300,
   },
   emptyStateEmoji: {
     fontSize: 80,
-    marginBottom: 24,
+    marginBottom: Spacing.xl,
   },
   emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 16,
+    fontSize: Typography.fontSize.xxl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.md,
     textAlign: 'center',
   },
   emptyStateText: {
-    fontSize: 16,
-    color: '#7f8c8d',
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 32,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    marginBottom: Spacing.xl,
   },
   exploreButton: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    marginTop: Spacing.md,
   },
-  exploreButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+  buttonIcon: {
+    fontSize: Typography.fontSize.lg,
   },
+  
+  // List Containers
   emptyContainer: {
     flexGrow: 1,
-    justifyContent: 'center',
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingBottom: Spacing.xxxl,
   },
 });

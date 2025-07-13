@@ -1,6 +1,7 @@
+// src/context/DatabaseContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DatabaseService } from '../services/DatabaseService';
-import { CatBreed, BreedFilter, BreedSortOptions } from '../types/CatBreed';
+import { CatBreed, BreedFilter } from '../types/CatBreed';
 
 interface DatabaseContextType {
   // State
@@ -12,8 +13,8 @@ interface DatabaseContextType {
   // Breed operations
   getAllBreeds: () => Promise<void>;
   getBreedById: (id: number) => Promise<CatBreed | null>;
-  searchBreeds: (query: string) => Promise<CatBreed[]>;
-  filterBreeds: (filter: BreedFilter) => Promise<CatBreed[]>;
+  searchBreeds: (query: string) => CatBreed[]; // Updated to return synchronously for UI
+  filterBreeds: (filter: BreedFilter, sourceBreeds?: CatBreed[]) => CatBreed[]; // Updated to work with current breeds
   
   // Favorites operations
   getFavorites: () => Promise<void>;
@@ -27,12 +28,12 @@ interface DatabaseContextType {
   addToSearchHistory: (query: string) => Promise<void>;
   
   // Utility operations
-  getFilterOptions: () => Promise<{
+  getFilterOptions: () => {
     origins: string[];
     coatLengths: string[];
     activityLevels: string[];
     bodyTypes: string[];
-  }>;
+  };
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
@@ -93,12 +94,20 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     }
   };
 
-  const searchBreeds = async (query: string): Promise<CatBreed[]> => {
+  // Updated to work synchronously with current breeds for better UI performance
+  const searchBreeds = (query: string): CatBreed[] => {
     try {
       if (!query.trim()) {
         return breeds;
       }
-      return await db.searchBreeds(query);
+      
+      const lowercaseQuery = query.toLowerCase();
+      return breeds.filter(breed => 
+        breed.name.toLowerCase().includes(lowercaseQuery) ||
+        breed.origin.toLowerCase().includes(lowercaseQuery) ||
+        breed.temperament.toLowerCase().includes(lowercaseQuery) ||
+        breed.tica_code.toLowerCase().includes(lowercaseQuery)
+      );
     } catch (err) {
       console.error('Error searching breeds:', err);
       setError('Failed to search breeds');
@@ -106,16 +115,12 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     }
   };
 
-  const filterBreeds = async (filter: BreedFilter): Promise<CatBreed[]> => {
+  // Updated to work with current breeds and accept optional source breeds
+  const filterBreeds = (filter: BreedFilter, sourceBreeds: CatBreed[] = breeds): CatBreed[] => {
     try {
-      let results = breeds;
+      let results = sourceBreeds;
 
-      // Apply search query
-      if (filter.searchQuery && filter.searchQuery.trim()) {
-        results = await db.searchBreeds(filter.searchQuery);
-      }
-
-      // Apply additional filters
+      // Apply filters
       if (filter.origin) {
         results = results.filter(breed => breed.origin === filter.origin);
       }
@@ -210,14 +215,13 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     }
   };
 
-  const getFilterOptions = async () => {
+  // Updated to work synchronously with current breeds for better performance
+  const getFilterOptions = () => {
     try {
-      const [origins, coatLengths, activityLevels, bodyTypes] = await Promise.all([
-        db.getUniqueOrigins(),
-        db.getUniqueCoatLengths(),
-        db.getUniqueActivityLevels(),
-        db.getUniqueBodyTypes()
-      ]);
+      const origins = [...new Set(breeds.map(breed => breed.origin))].sort();
+      const coatLengths = [...new Set(breeds.map(breed => breed.coat_length))].sort();
+      const activityLevels = [...new Set(breeds.map(breed => breed.activity_level))].sort();
+      const bodyTypes = [...new Set(breeds.map(breed => breed.body_type))].sort();
 
       return {
         origins,
