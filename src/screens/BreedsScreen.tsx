@@ -52,6 +52,7 @@ export default function BreedsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'activity' | 'origin'>('name');
   const [showFilters, setShowFilters] = useState(false);
+  const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
 
   // Load breeds when screen comes into focus
   useFocusEffect(
@@ -124,6 +125,32 @@ export default function BreedsScreen() {
     }
   };
 
+  // Better image source resolution
+  const getImageSource = (breed: CatBreed) => {
+    // First try with TICA code
+    if (breed.tica_code && catImages[breed.tica_code as keyof typeof catImages]) {
+      return catImages[breed.tica_code as keyof typeof catImages];
+    }
+    
+    // Then try with image_path
+    if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
+      return catImages[breed.image_path as keyof typeof catImages];
+    }
+    
+    // Try to construct filename from breed name
+    const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    if (catImages[nameBasedKey as keyof typeof catImages]) {
+      return catImages[nameBasedKey as keyof typeof catImages];
+    }
+    
+    // Fallback to placeholder
+    return catImages['placeholder.jpg'];
+  };
+
+  const handleImageError = (breedId: string) => {
+    setImageErrors(prev => ({ ...prev, [breedId]: true }));
+  };
+
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <Text style={styles.screenTitle}>Discover Cat Breeds</Text>
@@ -164,7 +191,9 @@ export default function BreedsScreen() {
   );
 
   const renderBreed = useCallback(({ item }: { item: CatBreed }) => {
-    const imageSource = catImages[item.tica_code as keyof typeof catImages];
+    const imageSource = getImageSource(item);
+    const breedKey = item.id?.toString() || item.tica_code;
+    const hasImageError = imageErrors[breedKey];
     
     return (
       <Card
@@ -178,11 +207,19 @@ export default function BreedsScreen() {
       >
         {/* Image Section */}
         <View style={styles.breedImageContainer}>
-          <Image 
-            source={imageSource || { uri: item.image_path }}
-            style={styles.breedImage}
-            resizeMode="cover"
-          />
+          {!hasImageError ? (
+            <Image 
+              source={imageSource}
+              style={styles.breedImage}
+              resizeMode="cover"
+              onError={() => handleImageError(breedKey)}
+            />
+          ) : (
+            <View style={styles.imageFallback}>
+              <Text style={styles.fallbackEmoji}>🐱</Text>
+              <Text style={styles.fallbackText}>{item.name}</Text>
+            </View>
+          )}
           
           {/* Favorite Button */}
           <TouchableOpacity
@@ -268,7 +305,7 @@ export default function BreedsScreen() {
         </View>
       </Card>
     );
-  }, [handleFavoritePress, isFavorite]);
+  }, [handleFavoritePress, isFavorite, imageErrors]);
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
@@ -421,6 +458,24 @@ const styles = StyleSheet.create({
   breedImage: {
     width: '100%',
     height: '100%',
+  },
+  imageFallback: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.surfaceVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+  },
+  fallbackEmoji: {
+    fontSize: 48,
+    marginBottom: Spacing.sm,
+  },
+  fallbackText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    fontWeight: Typography.fontWeight.medium,
   },
   favoriteButton: {
     position: 'absolute',
