@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   StyleSheet,
@@ -7,19 +6,22 @@ import {
   ScrollView,
   Dimensions,
   StatusBar,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDatabase } from '../context/DatabaseContext';
 import { Card, FeatureCard } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { Colors, Typography, Spacing, BorderRadius, Layout, responsive } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { breeds, favorites } = useDatabase();
+  const insets = useSafeAreaInsets();
 
   const navigateToBreeds = () => {
     // @ts-ignore
@@ -33,16 +35,16 @@ export default function HomeScreen() {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} translucent />
       <ScrollView 
         style={styles.container}
         showsVerticalScrollIndicator={false}
-        bounces={true}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 80 }]}
       >
         {/* Hero Section */}
         <LinearGradient
           colors={[Colors.primary, Colors.primaryDark]}
-          style={styles.heroGradient}
+          style={[styles.heroGradient, { paddingTop: insets.top + 20 }]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
@@ -130,33 +132,32 @@ export default function HomeScreen() {
         </View>
 
         {/* Stats Section */}
-        <Card style={styles.statsCard} variant="elevated" shadow="md">
-          <Text style={styles.statsTitle}>Database Stats</Text>
-          
-          <View style={styles.statsContainer}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{breeds.length}</Text>
-              <Text style={styles.statLabel}>Total Breeds</Text>
+        <View style={styles.statsSection}>
+          <Card style={styles.statsCard} variant="elevated" shadow="md">
+            <Text style={styles.statsTitle}>Database Stats</Text>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{breeds.length}</Text>
+                <Text style={styles.statLabel}>Total Breeds</Text>
+              </View>
+              
+              <View style={styles.statDivider} />
+              
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{favorites.length}</Text>
+                <Text style={styles.statLabel}>Your Favorites</Text>
+              </View>
+              
+              <View style={styles.statDivider} />
+              
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>Daily</Text>
+                <Text style={styles.statLabel}>Updates</Text>
+              </View>
             </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>{favorites.length}</Text>
-              <Text style={styles.statLabel}>Your Favorites</Text>
-            </View>
-            
-            <View style={styles.statDivider} />
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>Daily</Text>
-              <Text style={styles.statLabel}>Updates</Text>
-            </View>
-          </View>
-        </Card>
-
-        {/* Bottom Spacing for Tab Navigation */}
-        <View style={styles.bottomSpacing} />
+          </Card>
+        </View>
       </ScrollView>
     </>
   );
@@ -167,135 +168,127 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   
   // Hero Section
   heroGradient: {
-    paddingTop: responsive.getValue(Spacing.xxxl + 20, Spacing.xxxl + 40),
-    paddingBottom: responsive.getValue(Spacing.xxxl, Spacing.xxxl + 10),
-    paddingHorizontal: Layout.content.paddingHorizontal,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+    borderBottomLeftRadius: BorderRadius.xxl,
+    borderBottomRightRadius: BorderRadius.xxl,
   },
-  
   heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 200,
   },
-  
   heroTextContainer: {
     flex: 1,
-    paddingRight: Spacing.lg,
+    marginRight: Spacing.lg,
   },
-  
   heroTitle: {
-    fontSize: responsive.fontSize(Typography.fontSize.xxxxl, 0.15),
-    fontWeight: Typography.fontWeight.black,
+    fontSize: Platform.OS === 'ios' ? 34 : 32,
+    fontWeight: Typography.fontWeight.bold,
     color: Colors.textInverse,
     marginBottom: Spacing.md,
-    lineHeight: Typography.fontSize.xxxxl * Typography.lineHeight.tight,
+    lineHeight: Platform.OS === 'ios' ? 40 : 38,
   },
-  
   heroSubtitle: {
-    fontSize: responsive.fontSize(Typography.fontSize.lg, 0.1),
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.lg,
     color: Colors.textInverse,
+    opacity: 0.9,
     marginBottom: Spacing.md,
-    opacity: 0.95,
-    lineHeight: Typography.fontSize.lg * Typography.lineHeight.normal,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: Typography.fontSize.lg * 1.3,
   },
-  
   heroDescription: {
     fontSize: Typography.fontSize.base,
     color: Colors.textInverse,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
-    opacity: 0.85,
+    opacity: 0.8,
+    lineHeight: Typography.fontSize.base * 1.4,
+    fontWeight: Typography.fontWeight.normal,
   },
-  
   heroImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
   heroEmoji: {
-    fontSize: responsive.getValue(64, 80),
-    textAlign: 'center',
-  },
-  
-  // Sections
-  quickActionsSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.xl,
-  },
-  
-  featuresSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingBottom: Spacing.xxxl,
-  },
-  
-  sectionTitle: {
-    fontSize: Typography.fontSize.xxl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
-    marginBottom: Spacing.xl,
-    textAlign: 'left',
+    fontSize: 80,
   },
   
   // Quick Actions
+  quickActionsSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.lg,
+  },
   quickActionsContainer: {
     gap: Spacing.md,
   },
-  
   primaryAction: {
-    marginBottom: Spacing.sm,
+    backgroundColor: Colors.primary,
+    marginBottom: 0,
   },
-  
   secondaryAction: {
+    borderColor: Colors.primary,
     marginBottom: 0,
   },
   
-  // Features Grid
+  // Features Section
+  featuresSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
+  },
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: Spacing.md,
   },
-  
   featureCardItem: {
-    width: (screenWidth - (Layout.content.paddingHorizontal * 2) - Spacing.md) / 2,
+    width: (screenWidth - (Spacing.lg * 2) - Spacing.md) / 2,
     marginHorizontal: 0,
+    marginBottom: Spacing.md,
   },
-  
   featureIcon: {
-    fontSize: Typography.fontSize.xxxl,
+    fontSize: 24,
   },
   
   // Stats Section
-  statsCard: {
-    marginHorizontal: Layout.content.paddingHorizontal,
-    marginBottom: Spacing.xxxl,
-    padding: Spacing.xl,
+  statsSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xl,
   },
-  
+  statsCard: {
+    padding: Spacing.lg,
+    marginHorizontal: 0,
+    marginVertical: 0,
+  },
   statsTitle: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
+    marginBottom: Spacing.lg,
     textAlign: 'center',
-    marginBottom: Spacing.xl,
   },
-  
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
-  
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
-  
   statNumber: {
     fontSize: Typography.fontSize.xxxl,
     fontWeight: Typography.fontWeight.black,
@@ -303,22 +296,17 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
     textAlign: 'center',
   },
-  
   statLabel: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
     textAlign: 'center',
   },
-  
   statDivider: {
     width: 1,
     height: 40,
     backgroundColor: Colors.border,
     opacity: 0.5,
-  },
-  
-  bottomSpacing: {
-    height: Layout.tabBar.heightSafe,
+    marginHorizontal: Spacing.sm,
   },
 });

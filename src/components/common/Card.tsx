@@ -1,15 +1,14 @@
-
+// src/components/common/Card.tsx
 import React from 'react';
 import { 
   View, 
   Text,
-  Image,
   ViewStyle, 
   StyleSheet, 
   TouchableOpacity,
   TouchableOpacityProps 
 } from 'react-native';
-import { Colors, Spacing, BorderRadius, Shadows, Layout, Typography } from '../../constants/theme';
+import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../../constants/theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -29,7 +28,7 @@ export const Card: React.FC<CardProps & TouchableOpacityProps> = ({
   children,
   variant = 'elevated',
   padding = 'lg',
-  margin = 'md',
+  margin = 'none',
   shadow = 'sm',
   borderRadius = 'lg',
   fullWidth = true,
@@ -72,7 +71,7 @@ export const Card: React.FC<CardProps & TouchableOpacityProps> = ({
   );
 };
 
-// Feature Card component
+// Feature Card component with improved layout
 interface FeatureCardProps {
   icon: React.ReactNode;
   title: string;
@@ -99,10 +98,10 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       pressable={!!onPress}
       onPress={onPress}
       style={{
-        ...styles.featureCard,
-        ...styles[`feature_${variant}`],
-        ...style
-      }}
+        ...styles.featureCard,      
+        ...styles[`feature_${variant}`],     
+        ...style     
+        }}
     >
       <View style={styles.featureIconContainer}>
         <View style={[styles.featureIcon, styles[`featureIcon_${variant}`]]}>
@@ -111,8 +110,12 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
       </View>
       
       <View style={styles.featureContent}>
-        <Text style={styles.featureTitle}>{title}</Text>
-        <Text style={styles.featureDescription}>{description}</Text>
+        <Text style={styles.featureTitle} numberOfLines={2}>
+          {title}
+        </Text>
+        <Text style={styles.featureDescription} numberOfLines={3}>
+          {description}
+        </Text>
       </View>
     </Card>
   );
@@ -123,6 +126,7 @@ const styles = StyleSheet.create({
   base: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
   },
   
   // Variants
@@ -171,13 +175,16 @@ const styles = StyleSheet.create({
   // Feature Card Styles
   featureCard: {
     alignItems: 'center',
-    minHeight: 140,
-    flex: 1,
-    marginHorizontal: Spacing.xs,
+    justifyContent: 'flex-start',
+    minHeight: 160,
+    maxHeight: 200,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
   },
   
   featureIconContainer: {
     marginBottom: Spacing.md,
+    alignItems: 'center',
   },
   
   featureIcon: {
@@ -209,6 +216,7 @@ const styles = StyleSheet.create({
   featureContent: {
     alignItems: 'center',
     flex: 1,
+    justifyContent: 'center',
   },
   
   featureTitle: {
@@ -217,12 +225,14 @@ const styles = StyleSheet.create({
     color: Colors.text,
     marginBottom: Spacing.xs,
     textAlign: 'center',
+    lineHeight: Typography.fontSize.base * 1.2,
   },
   
   featureDescription: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: Typography.fontSize.sm * Typography.lineHeight.normal,
+    lineHeight: Typography.fontSize.sm * 1.3,
+    flex: 1,
   },
 });

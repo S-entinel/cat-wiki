@@ -1,4 +1,4 @@
-
+// src/components/common/Button.tsx
 import React from 'react';
 import { 
   TouchableOpacity, 
@@ -8,7 +8,8 @@ import {
   ViewStyle, 
   TextStyle, 
   ActivityIndicator,
-  GestureResponderEvent 
+  GestureResponderEvent,
+  Platform 
 } from 'react-native';
 import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../constants/theme';
 
@@ -96,7 +97,7 @@ export const Button: React.FC<ButtonProps> = ({
               styles[`${variant}Text`], 
               styles[`${size}Text`], 
               textStyle
-            ]}>
+            ]} numberOfLines={1}>
               {title}
             </Text>
             {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
@@ -113,12 +114,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: BorderRadius.lg,
     flexDirection: 'row',
+    overflow: 'hidden',
+    minHeight: Platform.OS === 'ios' ? 44 : 40, // Ensure minimum touch target
   },
   
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    flex: 1,
   },
   
   // Variants
@@ -147,20 +151,24 @@ const styles = StyleSheet.create({
   sm: {
     height: 36,
     paddingHorizontal: Spacing.md,
+    minHeight: 36,
   },
   md: {
     height: 44,
     paddingHorizontal: Spacing.lg,
+    minHeight: 44,
   },
   lg: {
     height: 52,
     paddingHorizontal: Spacing.xl,
+    minHeight: 52,
   },
   
   // Text styles
   text: {
     fontWeight: Typography.fontWeight.semibold,
     textAlign: 'center',
+    flexShrink: 1,
   },
   
   // Text variants
@@ -183,12 +191,15 @@ const styles = StyleSheet.create({
   // Text sizes
   smText: {
     fontSize: Typography.fontSize.sm,
+    lineHeight: Typography.fontSize.sm * 1.2,
   },
   mdText: {
     fontSize: Typography.fontSize.base,
+    lineHeight: Typography.fontSize.base * 1.2,
   },
   lgText: {
     fontSize: Typography.fontSize.lg,
+    lineHeight: Typography.fontSize.lg * 1.2,
   },
   
   // States
@@ -202,9 +213,13 @@ const styles = StyleSheet.create({
   // Icons
   leftIcon: {
     marginRight: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   rightIcon: {
     marginLeft: Spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   
   loadingIndicator: {

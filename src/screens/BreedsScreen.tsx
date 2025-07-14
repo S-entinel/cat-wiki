@@ -1,159 +1,118 @@
-
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  FlatList, 
-  TouchableOpacity, 
-  Image,
-  ActivityIndicator,
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
   RefreshControl,
   StatusBar,
-  Dimensions
+  ActivityIndicator,
+  TouchableOpacity,
+  Image,
+  Dimensions,
+  Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDatabase } from '../context/DatabaseContext';
-import { CatBreed, BreedFilter } from '../types/CatBreed';
-import { FilterDropdown } from '../components/FilterDropdown';
-import { SortDropdown, SortOption } from '../components/SortDropdown';
-import { AnimatedHeart } from '../components/AnimatedHeart';
-import { SearchBar } from '../components/common/SearchBar';
+import { CatBreed } from '../types/CatBreed';
 import { Card } from '../components/common/Card';
-import { Badge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
+import { Badge } from '../components/common/Badge';
+import { SearchBar } from '../components/common/SearchBar';
+import { AnimatedHeart } from '../components/AnimatedHeart';
 import { catImages } from '../assets/catPhotos/imageMap';
 import { 
   Colors, 
   Typography, 
   Spacing, 
   BorderRadius, 
-  Layout,
   Shadows
 } from '../constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
+const CARD_MARGIN = Spacing.md;
+const CARD_WIDTH = screenWidth - (CARD_MARGIN * 2);
 
 export default function BreedsScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const {
     breeds,
     isLoading,
     error,
-    searchBreeds,
-    filterBreeds,
-    getSearchHistory,
-    addToSearchHistory,
-    getFilterOptions,
+    getAllBreeds,
     toggleFavorite,
     isFavorite,
-    getAllBreeds
   } = useDatabase();
 
   // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredBreeds, setFilteredBreeds] = useState<CatBreed[]>([]);
-  const [selectedOrigin, setSelectedOrigin] = useState('');
-  const [selectedCoatLength, setSelectedCoatLength] = useState('');
-  const [selectedActivityLevel, setSelectedActivityLevel] = useState('');
-  const [sortBy, setSortBy] = useState<SortOption>('name');
   const [refreshing, setRefreshing] = useState(false);
+  const [sortBy, setSortBy] = useState<'name' | 'activity' | 'origin'>('name');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter options
-  const filterOptions = useMemo(() => getFilterOptions(), [breeds]);
+  // Load breeds when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadBreeds();
+    }, [])
+  );
 
-  // Check if any filters are active
-  const hasActiveFilters = selectedOrigin || selectedCoatLength || selectedActivityLevel || searchQuery;
-  const activeFilterCount = [selectedOrigin, selectedCoatLength, selectedActivityLevel, searchQuery].filter(Boolean).length;
-
-  // Search and filter logic
+  // Filter and sort breeds
   useEffect(() => {
-    let result = breeds;
-
-    // Apply search query first
+    let filtered = breeds;
+    
+    // Apply search filter
     if (searchQuery.trim()) {
-      result = searchBreeds(searchQuery.trim());
+      filtered = breeds.filter(breed =>
+        breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        breed.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        breed.temperament.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
-
-    // Apply filters
-    const filter: BreedFilter = {
-      origin: selectedOrigin || undefined,
-      coatLength: selectedCoatLength as any,
-      activityLevel: selectedActivityLevel as any,
-    };
-
-    if (selectedOrigin || selectedCoatLength || selectedActivityLevel) {
-      result = filterBreeds(filter, result);
-    }
-
+    
     // Apply sorting
-    result = [...result].sort((a, b) => {
+    filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
+        case 'activity':
+          return a.activity_level.localeCompare(b.activity_level);
         case 'origin':
           return a.origin.localeCompare(b.origin);
-        case 'lifespan':
-          return (b.lifespan_min + b.lifespan_max) - (a.lifespan_min + a.lifespan_max);
-        case 'temperament':
-          return a.temperament.localeCompare(b.temperament);
         default:
           return 0;
       }
     });
+    
+    setFilteredBreeds(filtered);
+  }, [breeds, searchQuery, sortBy]);
 
-    setFilteredBreeds(result);
-  }, [breeds, searchQuery, selectedOrigin, selectedCoatLength, selectedActivityLevel, sortBy, searchBreeds, filterBreeds]);
-
-  // Handlers
-  const handleSearch = useCallback(async (query: string) => {
-    setSearchQuery(query);
-    if (query.trim() && query.length > 2) {
-      try {
-        await addToSearchHistory(query.trim());
-      } catch (error) {
-        console.error('Error adding to search history:', error);
-      }
-    }
-  }, [addToSearchHistory]);
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery('');
-  }, []);
-
-  const clearAllFilters = useCallback(() => {
-    setSearchQuery('');
-    setSelectedOrigin('');
-    setSelectedCoatLength('');
-    setSelectedActivityLevel('');
-  }, []);
-
-  const handleRefresh = useCallback(async () => {
-    setRefreshing(true);
+  const loadBreeds = async () => {
     try {
       await getAllBreeds();
     } catch (error) {
-      console.error('Error refreshing breeds:', error);
-    } finally {
-      setRefreshing(false);
+      console.error('Error loading breeds:', error);
     }
-  }, [getAllBreeds]);
+  };
 
-  const handleBreedPress = useCallback((breed: CatBreed) => {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadBreeds();
+    setRefreshing(false);
+  };
+
+  const handleBreedPress = (breed: CatBreed) => {
     // @ts-ignore
     navigation.navigate('BreedDetail', { breed, breedId: breed.id });
-  }, [navigation]);
+  };
 
-  const handleFavoritePress = useCallback(async (breedId: number) => {
-    try {
-      await toggleFavorite(breedId);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-    }
+  const handleFavoritePress = useCallback((breedId: number) => {
+    toggleFavorite(breedId);
   }, [toggleFavorite]);
 
-  // Get activity level badge variant
   const getActivityVariant = (level: string): 'success' | 'warning' | 'error' | 'info' | 'primary' => {
     switch (level) {
       case 'Low': return 'success';
@@ -165,95 +124,42 @@ export default function BreedsScreen() {
     }
   };
 
-  // Render functions
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <Text style={styles.screenTitle}>Discover Cat Breeds</Text>
       <Text style={styles.screenSubtitle}>
         {filteredBreeds.length} of {breeds.length} breeds
+        {searchQuery && ' matching your search'}
       </Text>
-    </View>
-  );
-
-  const renderFiltersSection = () => (
-    <View style={styles.filtersSection}>
-      {/* Filter Toggle Button */}
-      <View style={styles.filterHeader}>
+      
+      {/* Search Bar */}
+      <SearchBar
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Search breeds..."
+      />
+      
+      {/* Filter and Sort Controls */}
+      <View style={styles.controlsRow}>
         <TouchableOpacity 
-          style={styles.filterToggle}
+          style={styles.filterButton}
           onPress={() => setShowFilters(!showFilters)}
         >
-          <Text style={styles.filterToggleText}>
-            Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
-          </Text>
-          <Text style={styles.filterToggleIcon}>
-            {showFilters ? '▲' : '▼'}
+          <Text style={styles.filterButtonText}>Filters ▼</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={styles.sortButton}
+          onPress={() => {
+            const nextSort = sortBy === 'name' ? 'activity' : sortBy === 'activity' ? 'origin' : 'name';
+            setSortBy(nextSort);
+          }}
+        >
+          <Text style={styles.sortButtonText}>
+            Sort: {sortBy === 'name' ? 'Name' : sortBy === 'activity' ? 'Activity' : 'Origin'} ▼
           </Text>
         </TouchableOpacity>
-
-        <SortDropdown
-          selectedSort={sortBy}
-          onSortChange={setSortBy}
-        />
       </View>
-
-      {/* Expandable Filters */}
-      {showFilters && (
-        <View style={styles.filtersContainer}>
-          <View style={styles.filtersRow}>
-            <FilterDropdown
-              title="Origin"
-              options={filterOptions.origins.map(origin => ({ label: origin, value: origin }))}
-              selectedValue={selectedOrigin}
-              onSelect={setSelectedOrigin}
-              placeholder="All"
-              style={styles.filterDropdown}
-            />
-            <FilterDropdown
-              title="Coat"
-              options={filterOptions.coatLengths.map(length => ({ label: length, value: length }))}
-              selectedValue={selectedCoatLength}
-              onSelect={setSelectedCoatLength}
-              placeholder="All"
-              style={styles.filterDropdown}
-            />
-          </View>
-          
-          <View style={styles.filtersRow}>
-            <FilterDropdown
-              title="Activity"
-              options={filterOptions.activityLevels.map(level => ({ label: level, value: level }))}
-              selectedValue={selectedActivityLevel}
-              onSelect={setSelectedActivityLevel}
-              placeholder="All"
-              style={styles.filterDropdown}
-            />
-            
-            {hasActiveFilters && (
-              <TouchableOpacity 
-                style={styles.clearFiltersButton}
-                onPress={clearAllFilters}
-              >
-                <Text style={styles.clearFiltersText}>Clear All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-      )}
-
-      {/* Active Filters Summary */}
-      {hasActiveFilters && (
-        <View style={styles.activeFiltersContainer}>
-          <Text style={styles.activeFiltersText}>
-            {filteredBreeds.length} breeds match your criteria
-          </Text>
-          {activeFilterCount > 1 && (
-            <TouchableOpacity onPress={clearAllFilters}>
-              <Text style={styles.clearAllText}>Clear All</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
     </View>
   );
 
@@ -264,7 +170,7 @@ export default function BreedsScreen() {
       <Card
         variant="elevated"
         padding="none"
-        margin="md"
+        margin="none"
         shadow="sm"
         pressable
         onPress={() => handleBreedPress(item)}
@@ -287,179 +193,138 @@ export default function BreedsScreen() {
             <AnimatedHeart
               isFavorite={isFavorite(item.id!)}
               onPress={() => handleFavoritePress(item.id!)}
-              size="md"
-              showBackground
             />
           </TouchableOpacity>
-          
-          {/* TICA Code Badge */}
-          <View style={styles.ticaBadge}>
-            <Text style={styles.ticaCode}>{item.tica_code}</Text>
-          </View>
         </View>
         
         {/* Content Section */}
         <View style={styles.breedContent}>
-          {/* Header */}
           <View style={styles.breedHeader}>
             <Text style={styles.breedName} numberOfLines={1}>
               {item.name}
             </Text>
-            <View style={styles.breedOrigin}>
-              <Text style={styles.originEmoji}>📍</Text>
-              <Text style={styles.originText} numberOfLines={1}>
+            <View style={styles.originContainer}>
+              <Text style={styles.originIcon}>📍</Text>
+              <Text style={styles.breedOrigin} numberOfLines={1}>
                 {item.origin}
               </Text>
             </View>
           </View>
           
-          {/* Details Row */}
-          <View style={styles.breedDetails}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Coat:</Text>
-              <Text style={styles.detailValue}>{item.coat_length}</Text>
+          {/* Breed Stats */}
+          <View style={styles.breedStats}>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Coat:</Text>
+              <Text style={styles.statValue}>{item.coat_length}</Text>
             </View>
             
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Activity:</Text>
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Activity:</Text>
               <Badge 
-                text={item.activity_level} 
+                text={item.activity_level}
                 variant={getActivityVariant(item.activity_level)}
                 size="sm"
+                style={styles.activityBadge}
               />
             </View>
-          </View>
-          
-          {/* Stats Row */}
-          <View style={styles.breedStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statEmoji}>⏰</Text>
-              <Text style={styles.statText}>
+            
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Lifespan:</Text>
+              <Text style={styles.statValue}>
                 {item.lifespan_min}-{item.lifespan_max} years
               </Text>
             </View>
             
-            <View style={styles.statItem}>
-              <Text style={styles.statEmoji}>⚖️</Text>
-              <Text style={styles.statText}>
-                {item.weight_min_female}-{item.weight_max_male} kg
+            <View style={styles.statRow}>
+              <Text style={styles.statLabel}>Weight:</Text>
+              <Text style={styles.statValue}>
+                {item.weight_min_male}-{item.weight_max_male} kg
               </Text>
             </View>
           </View>
           
-          {/* Temperament */}
-          <Text style={styles.breedTemperament} numberOfLines={2}>
-            {item.temperament}
-          </Text>
+          {/* Temperament Tags */}
+          <View style={styles.temperamentContainer}>
+            {item.temperament.split(',').slice(0, 3).map((trait, index) => (
+              <Badge
+                key={index}
+                text={trait.trim()}
+                variant="secondary"
+                size="sm"
+                style={styles.temperamentTag}
+              />
+            ))}
+          </View>
+          
+          {/* TICA Code */}
+          <View style={styles.ticaContainer}>
+            <Badge
+              text={item.tica_code}
+              variant="primary"
+              size="sm"
+              style={styles.ticaBadge}
+            />
+          </View>
         </View>
       </Card>
     );
-  }, [handleBreedPress, handleFavoritePress, isFavorite]);
+  }, [handleFavoritePress, isFavorite]);
 
-  const renderEmptyState = () => {
-    if (hasActiveFilters) {
-      return (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateEmoji}>🔍</Text>
-          <Text style={styles.emptyStateTitle}>No breeds found</Text>
-          <Text style={styles.emptyStateText}>
-            No cat breeds match your current search and filter criteria. Try adjusting your filters or search terms.
-          </Text>
-          <Button
-            title="Clear Filters"
-            onPress={clearAllFilters}
-            variant="primary"
-            style={styles.clearFiltersButtonLarge}
-          />
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.emptyStateContainer}>
-        <Text style={styles.emptyStateEmoji}>😸</Text>
-        <Text style={styles.emptyStateTitle}>No breeds available</Text>
-        <Text style={styles.emptyStateText}>
-          There are no cat breeds in the database yet. Pull down to refresh and try again.
-        </Text>
+  const renderEmptyState = () => (
+    <View style={styles.emptyState}>
+      <Text style={styles.emptyStateIcon}>🔍</Text>
+      <Text style={styles.emptyStateTitle}>No breeds found</Text>
+      <Text style={styles.emptyStateText}>
+        {searchQuery 
+          ? 'Try adjusting your search terms' 
+          : 'No cat breeds available at the moment'}
+      </Text>
+      {!searchQuery && (
         <Button
           title="Refresh"
           onPress={handleRefresh}
-          variant="primary"
+          variant="outline"
+          size="md"
           style={styles.refreshButton}
         />
+      )}
+    </View>
+  );
+
+  if (isLoading && breeds.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading cat breeds...</Text>
       </View>
     );
-  };
-
-  const renderLoadingState = () => (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={Colors.primary} />
-      <Text style={styles.loadingText}>Loading cat breeds...</Text>
-    </View>
-  );
-
-  const renderErrorState = () => (
-    <View style={styles.errorContainer}>
-      <Text style={styles.emptyStateEmoji}>😿</Text>
-      <Text style={styles.errorTitle}>Something went wrong</Text>
-      <Text style={styles.errorText}>{error}</Text>
-      <Button
-        title="Try Again"
-        onPress={handleRefresh}
-        variant="primary"
-        style={styles.retryButton}
-      />
-    </View>
-  );
-
-  // Main render
-  if (isLoading && breeds.length === 0) {
-    return renderLoadingState();
-  }
-
-  if (error && breeds.length === 0) {
-    return renderErrorState();
   }
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      <View style={styles.container}>
-        {/* Header */}
-        {renderHeader()}
-
-        {/* Search Bar */}
-        <SearchBar
-          value={searchQuery}
-          onChangeText={handleSearch}
-          onClear={clearSearch}
-          placeholder="Search breeds..."
-        />
-
-        {/* Filters Section */}
-        {renderFiltersSection()}
-
-        {/* Breeds List */}
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <FlatList
           data={filteredBreeds}
           renderItem={renderBreed}
           keyExtractor={(item) => item.id?.toString() || item.tica_code}
-          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderHeader}
           ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={filteredBreeds.length === 0 ? styles.emptyContainer : styles.listContainer}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={handleRefresh}
               colors={[Colors.primary]}
-              tintColor={Colors.primary}
             />
           }
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingBottom: insets.bottom + 80 }
+          ]}
+          showsVerticalScrollIndicator={false}
           removeClippedSubviews={true}
           maxToRenderPerBatch={10}
           windowSize={10}
-          initialNumToRender={8}
         />
       </View>
     </>
@@ -472,246 +337,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   
-  // Header
-  headerSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-  },
-  screenTitle: {
-    fontSize: Typography.fontSize.xxxl,
-    fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  screenSubtitle: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  // Filters Section
-  filtersSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    marginBottom: Spacing.md,
-  },
-  
-  filterHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  
-  filterToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primarySoft,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    minHeight: 44,
-  },
-  
-  filterToggleText: {
-    fontSize: Typography.fontSize.base,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.primary,
-    marginRight: Spacing.sm,
-  },
-  
-  filterToggleIcon: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.primary,
-    fontWeight: Typography.fontWeight.bold,
-  },
-  
-  filtersContainer: {
-    gap: Spacing.md,
-  },
-  
-  filtersRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'flex-end',
-  },
-  
-  filterDropdown: {
-    flex: 1,
-  },
-  
-  clearFiltersButton: {
-    backgroundColor: Colors.errorSoft,
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  
-  clearFiltersText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.error,
-  },
-  
-  // Active Filters
-  activeFiltersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    backgroundColor: Colors.infoSoft,
-    borderRadius: BorderRadius.lg,
-    marginTop: Spacing.md,
-  },
-  
-  activeFiltersText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.info,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  clearAllText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.info,
-    fontWeight: Typography.fontWeight.bold,
-  },
-  
-  // Breed Cards
-  breedCard: {
-    overflow: 'hidden',
-  },
-  
-  breedImageContainer: {
-    position: 'relative',
-    height: 200,
-  },
-  
-  breedImage: {
-    width: '100%',
-    height: '100%',
-  },
-  
-  favoriteButton: {
-    position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.md,
-  },
-  
-  ticaBadge: {
-    position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
-  },
-  
-  ticaCode: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textInverse,
-  },
-  
-  breedContent: {
-    padding: Spacing.lg,
-  },
-  
-  breedHeader: {
-    marginBottom: Spacing.md,
-  },
-  
-  breedName: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
-  
-  breedOrigin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  originEmoji: {
-    fontSize: Typography.fontSize.sm,
-    marginRight: Spacing.xs,
-  },
-  
-  originText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  breedDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  
-  detailLabel: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    marginRight: Spacing.xs,
-  },
-  
-  detailValue: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  breedStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  
-  statEmoji: {
-    fontSize: Typography.fontSize.sm,
-    marginRight: Spacing.xs,
-  },
-  
-  statText: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  breedTemperament: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    lineHeight: Typography.fontSize.sm * Typography.lineHeight.normal,
-    fontStyle: 'italic',
-  },
-  
-  // Loading States
+  // Loading state
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: Layout.content.paddingHorizontal,
+    paddingHorizontal: Spacing.lg,
   },
-  
   loadingText: {
     marginTop: Spacing.lg,
     fontSize: Typography.fontSize.base,
@@ -719,80 +352,188 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   
-  // Error States
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  // Header section
+  headerSection: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
     backgroundColor: Colors.background,
-    paddingHorizontal: Layout.content.paddingHorizontal,
+  },
+  screenTitle: {
+    fontSize: Typography.fontSize.xxxl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  screenSubtitle: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.lg,
   },
   
-  errorTitle: {
+  // Controls
+  controlsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    marginTop: Spacing.md,
+  },
+  filterButton: {
+    flex: 1,
+    backgroundColor: Colors.primarySoft,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  filterButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    color: Colors.primary,
+  },
+  sortButton: {
+    flex: 1,
+    backgroundColor: Colors.surfaceVariant,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  sortButtonText: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.medium,
+    color: Colors.text,
+  },
+  
+  // Breed cards
+  breedCard: {
+    marginHorizontal: CARD_MARGIN,
+    marginBottom: Spacing.lg,
+    width: CARD_WIDTH,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  breedImageContainer: {
+    position: 'relative',
+    height: 180,
+    backgroundColor: Colors.surfaceVariant,
+  },
+  breedImage: {
+    width: '100%',
+    height: '100%',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: Spacing.sm,
+    right: Spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: BorderRadius.full,
+    padding: Spacing.xs,
+    ...Shadows.sm,
+  },
+  
+  // Breed content
+  breedContent: {
+    padding: Spacing.lg,
+  },
+  breedHeader: {
+    marginBottom: Spacing.md,
+  },
+  breedName: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.md,
-    textAlign: 'center',
+    marginBottom: Spacing.xs,
   },
-  
-  errorText: {
+  originContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  originIcon: {
+    fontSize: Typography.fontSize.sm,
+    marginRight: Spacing.xs,
+  },
+  breedOrigin: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.xl,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    fontWeight: Typography.fontWeight.medium,
   },
   
-  retryButton: {
-    minWidth: 120,
+  // Stats
+  breedStats: {
+    marginBottom: Spacing.md,
   },
-  
-  // Empty States
-  emptyStateContainer: {
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-    paddingHorizontal: Layout.content.paddingHorizontal,
+    marginBottom: Spacing.xs,
+  },
+  statLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  statValue: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text,
+    fontWeight: Typography.fontWeight.semibold,
+  },
+  activityBadge: {
+    marginLeft: Spacing.sm,
+  },
+  
+  // Temperament
+  temperamentContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+    marginBottom: Spacing.md,
+  },
+  temperamentTag: {
+    marginRight: 0,
+    marginBottom: 0,
+  },
+  
+  // TICA code
+  ticaContainer: {
+    alignItems: 'flex-start',
+  },
+  ticaBadge: {
+    marginRight: 0,
+  },
+  
+  // Empty state
+  emptyState: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.xxxl,
   },
-  
-  emptyStateEmoji: {
-    fontSize: 80,
-    marginBottom: Spacing.xl,
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: Spacing.lg,
   },
-  
   emptyStateTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.md,
-    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
-  
   emptyStateText: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
-    marginBottom: Spacing.xl,
-    maxWidth: 300,
+    marginBottom: Spacing.lg,
+    lineHeight: Typography.fontSize.base * 1.4,
   },
-  
-  clearFiltersButtonLarge: {
-    minWidth: 140,
-  },
-  
   refreshButton: {
-    minWidth: 100,
+    paddingHorizontal: Spacing.xl,
   },
   
-  // List Containers
-  emptyContainer: {
-    flexGrow: 1,
-  },
-  
+  // List
   listContainer: {
-    paddingBottom: Layout.tabBar.heightSafe,
+    flexGrow: 1,
   },
 });
