@@ -1,149 +1,164 @@
-// src/screens/HomeScreen.tsx
+
 import React from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity,
-  Dimensions 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  Dimensions,
+  StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
-import { Card } from '../components/common/Card';
+import { useDatabase } from '../context/DatabaseContext';
+import { Card, FeatureCard } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import { RootTabParamList } from '../types/navigation';
+import { Colors, Typography, Spacing, BorderRadius, Layout, responsive } from '../constants/theme';
 
 const { width: screenWidth } = Dimensions.get('window');
 
-type HomeScreenNavigationProp = BottomTabNavigationProp<RootTabParamList, 'Home'>;
-
 export default function HomeScreen() {
-  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const navigation = useNavigation();
+  const { breeds, favorites } = useDatabase();
 
-  const handleExploreBreedsPress = () => {
+  const navigateToBreeds = () => {
+    // @ts-ignore
     navigation.navigate('Breeds');
   };
 
-  const handleViewFavoritesPress = () => {
+  const navigateToFavorites = () => {
+    // @ts-ignore
     navigation.navigate('Favorites');
   };
 
-  const features = [
-    {
-      icon: '🔍',
-      title: 'Discover Breeds',
-      description: 'Browse through hundreds of cat breeds with detailed information',
-      color: Colors.primary,
-    },
-    {
-      icon: '❤️',
-      title: 'Save Favorites',
-      description: 'Keep track of your favorite breeds for quick access',
-      color: Colors.secondary,
-    },
-    {
-      icon: '📊',
-      title: 'Compare Cats',
-      description: 'Learn about temperament, care needs, and characteristics',
-      color: Colors.accent,
-    },
-    {
-      icon: '🏠',
-      title: 'Find Your Match',
-      description: 'Discover the perfect cat breed for your lifestyle',
-      color: Colors.success,
-    },
-  ];
-
-  const renderFeatureCard = (feature: typeof features[0], index: number) => (
-    <Card key={index} style={styles.featureCard} variant="elevated">
-      <View style={[styles.featureIcon, { backgroundColor: `${feature.color}20` }]}>
-        <Text style={styles.featureIconText}>{feature.icon}</Text>
-      </View>
-      <Text style={styles.featureTitle}>{feature.title}</Text>
-      <Text style={styles.featureDescription}>{feature.description}</Text>
-    </Card>
-  );
-
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Hero Section */}
-      <View style={styles.heroSection}>
-        <View style={styles.heroGradient}>
+    <>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      <ScrollView 
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        bounces={true}
+      >
+        {/* Hero Section */}
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          style={styles.heroGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
           <View style={styles.heroContent}>
             <View style={styles.heroTextContainer}>
-              <Text style={styles.heroTitle}>Cat Breed Encyclopedia</Text>
+              <Text style={styles.heroTitle}>
+                Cat Breed{'\n'}Encyclopedia
+              </Text>
               <Text style={styles.heroSubtitle}>
                 Discover the perfect feline companion for your lifestyle
               </Text>
               <Text style={styles.heroDescription}>
-                Explore comprehensive information about cat breeds, their characteristics, 
-                care requirements, and more.
+                Explore comprehensive information about cat breeds, their characteristics, care requirements, and more.
               </Text>
             </View>
+            
             <View style={styles.heroImageContainer}>
               <Text style={styles.heroEmoji}>🐱</Text>
             </View>
           </View>
-        </View>
-      </View>
+        </LinearGradient>
 
-      {/* Quick Actions */}
-      <View style={styles.quickActionsSection}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickActionsContainer}>
-          <Button
-            title="Explore Breeds"
-            onPress={handleExploreBreedsPress}
-            variant="primary"
-            size="lg"
-            leftIcon={<Text style={styles.buttonIcon}>🔍</Text>}
-            style={styles.primaryAction}
-          />
-          <Button
-            title="View Favorites"
-            onPress={handleViewFavoritesPress}
-            variant="outline"
-            size="lg"
-            leftIcon={<Text style={styles.buttonIcon}>❤️</Text>}
-            style={styles.secondaryAction}
-          />
-        </View>
-      </View>
-
-      {/* Features Grid */}
-      <View style={styles.featuresSection}>
-        <Text style={styles.sectionTitle}>Why Use Our App?</Text>
-        <View style={styles.featuresGrid}>
-          {features.map((feature, index) => renderFeatureCard(feature, index))}
-        </View>
-      </View>
-
-      {/* Stats Section */}
-      <Card style={styles.statsCard} variant="elevated">
-        <Text style={styles.statsTitle}>Comprehensive Database</Text>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>100+</Text>
-            <Text style={styles.statLabel}>Cat Breeds</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>TICA</Text>
-            <Text style={styles.statLabel}>Certified</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>Daily</Text>
-            <Text style={styles.statLabel}>Updates</Text>
+        {/* Quick Actions Section */}
+        <View style={styles.quickActionsSection}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          
+          <View style={styles.quickActionsContainer}>
+            <Button
+              title="🔍  Explore Breeds"
+              onPress={navigateToBreeds}
+              variant="primary"
+              size="lg"
+              fullWidth
+              style={styles.primaryAction}
+            />
+            
+            <Button
+              title="❤️  View Favorites"
+              onPress={navigateToFavorites}
+              variant="outline"
+              size="lg"
+              fullWidth
+              style={styles.secondaryAction}
+            />
           </View>
         </View>
-      </Card>
 
-      <View style={styles.bottomSpacing} />
-    </ScrollView>
+        {/* Features Grid */}
+        <View style={styles.featuresSection}>
+          <Text style={styles.sectionTitle}>Why Use Our App?</Text>
+          
+          <View style={styles.featuresGrid}>
+            <FeatureCard
+              icon={<Text style={styles.featureIcon}>🔍</Text>}
+              title="Discover Breeds"
+              description="Browse through hundreds of cat breeds with detailed information"
+              variant="primary"
+              style={styles.featureCardItem}
+            />
+            
+            <FeatureCard
+              icon={<Text style={styles.featureIcon}>❤️</Text>}
+              title="Save Favorites"
+              description="Keep track of your favorite breeds for quick access"
+              variant="secondary"
+              style={styles.featureCardItem}
+            />
+            
+            <FeatureCard
+              icon={<Text style={styles.featureIcon}>📊</Text>}
+              title="Compare Cats"
+              description="Learn about temperament, care needs, and characteristics"
+              variant="accent"
+              style={styles.featureCardItem}
+            />
+            
+            <FeatureCard
+              icon={<Text style={styles.featureIcon}>🏠</Text>}
+              title="Find Your Match"
+              description="Discover the perfect cat breed for your lifestyle"
+              variant="neutral"
+              style={styles.featureCardItem}
+            />
+          </View>
+        </View>
+
+        {/* Stats Section */}
+        <Card style={styles.statsCard} variant="elevated" shadow="md">
+          <Text style={styles.statsTitle}>Database Stats</Text>
+          
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{breeds.length}</Text>
+              <Text style={styles.statLabel}>Total Breeds</Text>
+            </View>
+            
+            <View style={styles.statDivider} />
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>{favorites.length}</Text>
+              <Text style={styles.statLabel}>Your Favorites</Text>
+            </View>
+            
+            <View style={styles.statDivider} />
+            
+            <View style={styles.statItem}>
+              <Text style={styles.statNumber}>Daily</Text>
+              <Text style={styles.statLabel}>Updates</Text>
+            </View>
+          </View>
+        </Card>
+
+        {/* Bottom Spacing for Tab Navigation */}
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
+    </>
   );
 }
 
@@ -154,158 +169,156 @@ const styles = StyleSheet.create({
   },
   
   // Hero Section
-  heroSection: {
-    marginBottom: Spacing.xl,
-  },
   heroGradient: {
-    backgroundColor: Colors.primary,
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.xxl,
-    paddingHorizontal: Spacing.lg,
+    paddingTop: responsive.getValue(Spacing.xxxl + 20, Spacing.xxxl + 40),
+    paddingBottom: responsive.getValue(Spacing.xxxl, Spacing.xxxl + 10),
+    paddingHorizontal: Layout.content.paddingHorizontal,
   },
+  
   heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  
   heroTextContainer: {
     flex: 1,
     paddingRight: Spacing.lg,
   },
+  
   heroTitle: {
-    fontSize: Typography.fontSize.xxxxl,
-    fontWeight: Typography.fontWeight.extrabold,
-    color: Colors.textInverse,
-    marginBottom: Spacing.sm,
-    lineHeight: Typography.fontSize.xxxxl * Typography.lineHeight.tight,
-  },
-  heroSubtitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.medium,
+    fontSize: responsive.fontSize(Typography.fontSize.xxxxl, 0.15),
+    fontWeight: Typography.fontWeight.black,
     color: Colors.textInverse,
     marginBottom: Spacing.md,
-    opacity: 0.9,
+    lineHeight: Typography.fontSize.xxxxl * Typography.lineHeight.tight,
   },
+  
+  heroSubtitle: {
+    fontSize: responsive.fontSize(Typography.fontSize.lg, 0.1),
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.textInverse,
+    marginBottom: Spacing.md,
+    opacity: 0.95,
+    lineHeight: Typography.fontSize.lg * Typography.lineHeight.normal,
+  },
+  
   heroDescription: {
     fontSize: Typography.fontSize.base,
     color: Colors.textInverse,
     lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
-    opacity: 0.8,
+    opacity: 0.85,
   },
+  
   heroImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
+  
   heroEmoji: {
-    fontSize: 80,
+    fontSize: responsive.getValue(64, 80),
     textAlign: 'center',
   },
   
-  // Quick Actions
+  // Sections
   quickActionsSection: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
+    paddingHorizontal: Layout.content.paddingHorizontal,
+    paddingTop: Spacing.xxxl,
+    paddingBottom: Spacing.xl,
   },
+  
+  featuresSection: {
+    paddingHorizontal: Layout.content.paddingHorizontal,
+    paddingBottom: Spacing.xxxl,
+  },
+  
   sectionTitle: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
+    textAlign: 'left',
   },
+  
+  // Quick Actions
   quickActionsContainer: {
     gap: Spacing.md,
   },
+  
   primaryAction: {
     marginBottom: Spacing.sm,
   },
+  
   secondaryAction: {
-    marginBottom: Spacing.sm,
-  },
-  buttonIcon: {
-    fontSize: Typography.fontSize.lg,
+    marginBottom: 0,
   },
   
-  // Features
-  featuresSection: {
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
-  },
+  // Features Grid
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: Spacing.md,
   },
-  featureCard: {
-    width: (screenWidth - Spacing.lg * 2 - Spacing.md) / 2,
-    alignItems: 'center',
-    padding: Spacing.lg,
-  },
-  featureIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing.md,
-  },
-  featureIconText: {
-    fontSize: Typography.fontSize.xxl,
-  },
-  featureTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
-    marginBottom: Spacing.sm,
-    textAlign: 'center',
-  },
-  featureDescription: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: Typography.fontSize.sm * Typography.lineHeight.relaxed,
+  
+  featureCardItem: {
+    width: (screenWidth - (Layout.content.paddingHorizontal * 2) - Spacing.md) / 2,
+    marginHorizontal: 0,
   },
   
-  // Stats
-  statsCard: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.xl,
+  featureIcon: {
+    fontSize: Typography.fontSize.xxxl,
   },
+  
+  // Stats Section
+  statsCard: {
+    marginHorizontal: Layout.content.paddingHorizontal,
+    marginBottom: Spacing.xxxl,
+    padding: Spacing.xl,
+  },
+  
   statsTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
+  
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
   },
+  
   statItem: {
     alignItems: 'center',
     flex: 1,
   },
+  
   statNumber: {
     fontSize: Typography.fontSize.xxxl,
-    fontWeight: Typography.fontWeight.extrabold,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.primary,
     marginBottom: Spacing.xs,
+    textAlign: 'center',
   },
+  
   statLabel: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
     textAlign: 'center',
   },
+  
   statDivider: {
     width: 1,
     height: 40,
     backgroundColor: Colors.border,
+    opacity: 0.5,
   },
   
   bottomSpacing: {
-    height: Spacing.xl,
+    height: Layout.tabBar.heightSafe,
   },
 });

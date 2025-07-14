@@ -1,107 +1,89 @@
-// src/components/SortDropdown.tsx
+
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Modal, FlatList } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  Modal, 
+  FlatList, 
+  StyleSheet,
+  ViewStyle 
+} from 'react-native';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 
 export type SortOption = 'name' | 'origin' | 'lifespan' | 'temperament';
 
-interface SortOptionItem {
-  label: string;
-  value: SortOption;
-  icon: string;
-}
-
 interface SortDropdownProps {
   selectedSort: SortOption;
   onSortChange: (sort: SortOption) => void;
+  style?: ViewStyle; // Added this prop
 }
-
-const sortOptions: SortOptionItem[] = [
-  { label: 'Name (A-Z)', value: 'name', icon: '🔤' },
-  { label: 'Origin', value: 'origin', icon: '🌍' },
-  { label: 'Lifespan', value: 'lifespan', icon: '⏰' },
-  { label: 'Temperament', value: 'temperament', icon: '😸' },
-];
 
 export const SortDropdown: React.FC<SortDropdownProps> = ({
   selectedSort,
-  onSortChange
+  onSortChange,
+  style, // Added this prop
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
-  const selectedOption = sortOptions.find(option => option.value === selectedSort);
+  const sortOptions: { label: string; value: SortOption }[] = [
+    { label: 'Name', value: 'name' },
+    { label: 'Origin', value: 'origin' },
+    { label: 'Lifespan', value: 'lifespan' },
+    { label: 'Temperament', value: 'temperament' },
+  ];
 
-  const handleSelect = (value: SortOption) => {
-    onSortChange(value);
+  const handleSelect = (sort: SortOption) => {
+    onSortChange(sort);
     setIsVisible(false);
   };
 
-  const renderOption = ({ item }: { item: SortOptionItem }) => (
-    <TouchableOpacity 
-      style={[
-        styles.optionItem,
-        item.value === selectedSort && styles.selectedOption
-      ]}
-      onPress={() => handleSelect(item.value)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.optionContent}>
-        <Text style={styles.optionIcon}>{item.icon}</Text>
-        <Text style={[
-          styles.optionText,
-          item.value === selectedSort && styles.selectedOptionText
-        ]}>
-          {item.label}
-        </Text>
-      </View>
-      {item.value === selectedSort && (
-        <View style={styles.checkmarkContainer}>
-          <Text style={styles.checkmark}>✓</Text>
-        </View>
-      )}
-    </TouchableOpacity>
-  );
+  const selectedOption = sortOptions.find(option => option.value === selectedSort);
+  const displayText = selectedOption ? selectedOption.label : 'Sort';
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity 
-        style={styles.sortButton}
+    <View style={[styles.container, style]}>
+      <TouchableOpacity
+        style={styles.dropdown}
         onPress={() => setIsVisible(true)}
-        activeOpacity={0.7}
       >
-        <View style={styles.buttonContent}>
-          <Text style={styles.sortIcon}>⇅</Text>
-          <Text style={styles.sortText}>Sort</Text>
-        </View>
+        <Text style={styles.sortLabel}>↕️ Sort</Text>
+        <Text style={styles.dropdownText}>{displayText}</Text>
+        <Text style={styles.arrow}>▼</Text>
       </TouchableOpacity>
 
       <Modal
         visible={isVisible}
-        transparent={true}
-        animationType="slide"
+        transparent
+        animationType="fade"
         onRequestClose={() => setIsVisible(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setIsVisible(false)}
         >
           <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Sort Breeds By</Text>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setIsVisible(false)}
-              >
-                <Text style={styles.closeButtonText}>✕</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.modalTitle}>Sort by</Text>
             <FlatList
               data={sortOptions}
-              renderItem={renderOption}
               keyExtractor={(item) => item.value}
-              style={styles.optionsList}
-              showsVerticalScrollIndicator={false}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.option,
+                    item.value === selectedSort && styles.selectedOption
+                  ]}
+                  onPress={() => handleSelect(item.value)}
+                >
+                  <Text style={[
+                    styles.optionText,
+                    item.value === selectedSort && styles.selectedOptionText
+                  ]}>
+                    {item.label}
+                  </Text>
+                </TouchableOpacity>
+              )}
             />
           </View>
         </TouchableOpacity>
@@ -112,92 +94,66 @@ export const SortDropdown: React.FC<SortDropdownProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    marginLeft: Spacing.sm,
+    // No default margin - let parent control spacing
   },
-  sortButton: {
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.md,
     borderWidth: 1,
     borderColor: Colors.border,
-    ...Shadows.sm,
+    minHeight: 44,
+    ...Shadows.xs,
   },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
+  sortLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    marginRight: Spacing.xs,
   },
-  sortIcon: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.primary,
-  },
-  sortText: {
+  dropdownText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.text,
     fontWeight: Typography.fontWeight.medium,
+    flex: 1,
+  },
+  arrow: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    marginLeft: Spacing.sm,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: Colors.surface,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '60%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    margin: Spacing.xl,
+    maxHeight: 250,
+    minWidth: 180,
+    ...Shadows.lg,
   },
   modalTitle: {
     fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surfaceVariant,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.bold,
-  },
-  optionsList: {
-    paddingBottom: Spacing.xl,
-  },
-  optionItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    color: Colors.text,
+    padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
+    borderBottomColor: Colors.border,
+  },
+  option: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
   selectedOption: {
-    backgroundColor: `${Colors.primary}10`,
-  },
-  optionContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  optionIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginRight: Spacing.md,
+    backgroundColor: Colors.primarySoft,
   },
   optionText: {
     fontSize: Typography.fontSize.base,
@@ -205,19 +161,6 @@ const styles = StyleSheet.create({
   },
   selectedOptionText: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  checkmarkContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkmark: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textInverse,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.semibold,
   },
 });

@@ -1,18 +1,31 @@
+
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from 'react-native';
-import { Colors, BorderRadius, Spacing, Typography, Shadows } from '../../constants/theme';
+import { 
+  TouchableOpacity, 
+  Text, 
+  View,
+  StyleSheet, 
+  ViewStyle, 
+  TextStyle, 
+  ActivityIndicator,
+  GestureResponderEvent 
+} from 'react-native';
+import { Colors, Spacing, BorderRadius, Typography, Shadows } from '../../constants/theme';
 
 interface ButtonProps {
   title: string;
-  onPress: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+  onPress: (event: GestureResponderEvent) => void;
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   disabled?: boolean;
   loading?: boolean;
+  fullWidth?: boolean;
   style?: ViewStyle;
   textStyle?: TextStyle;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  accessibilityLabel?: string;
+  testID?: string;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -22,12 +35,33 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md',
   disabled = false,
   loading = false,
+  fullWidth = false,
   style,
   textStyle,
   leftIcon,
   rightIcon,
+  accessibilityLabel,
+  testID,
 }) => {
   const isDisabled = disabled || loading;
+
+  const handlePress = (event: GestureResponderEvent) => {
+    if (!isDisabled && onPress) {
+      onPress(event);
+    }
+  };
+
+  const getLoadingColor = (variant: string): string => {
+    switch (variant) {
+      case 'outline':
+      case 'ghost':
+        return Colors.primary;
+      case 'danger':
+        return Colors.textInverse;
+      default:
+        return Colors.textInverse;
+    }
+  };
 
   return (
     <TouchableOpacity
@@ -35,35 +69,56 @@ export const Button: React.FC<ButtonProps> = ({
         styles.button,
         styles[variant],
         styles[size],
+        fullWidth && styles.fullWidth,
         isDisabled && styles.disabled,
         style,
       ]}
-      onPress={onPress}
+      onPress={handlePress}
       disabled={isDisabled}
       activeOpacity={0.8}
+      accessibilityLabel={accessibilityLabel || title}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: isDisabled }}
+      testID={testID}
     >
-      {leftIcon}
-      {loading ? (
-        <ActivityIndicator 
-          size="small" 
-          color={variant === 'outline' || variant === 'ghost' ? Colors.primary : Colors.textInverse} 
-        />
-      ) : (
-        <Text style={[styles.text, styles[`${variant}Text`], styles[`${size}Text`], textStyle]}>
-          {title}
-        </Text>
-      )}
-      {rightIcon}
+      <View style={styles.content}>
+        {loading ? (
+          <ActivityIndicator 
+            size="small" 
+            color={getLoadingColor(variant)}
+            style={styles.loadingIndicator}
+          />
+        ) : (
+          <>
+            {leftIcon && <View style={styles.leftIcon}>{leftIcon}</View>}
+            <Text style={[
+              styles.text, 
+              styles[`${variant}Text`], 
+              styles[`${size}Text`], 
+              textStyle
+            ]}>
+              {title}
+            </Text>
+            {rightIcon && <View style={styles.rightIcon}>{rightIcon}</View>}
+          </>
+        )}
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: BorderRadius.lg,
+    flexDirection: 'row',
+  },
+  
+  content: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BorderRadius.md,
   },
   
   // Variants
@@ -77,34 +132,38 @@ const styles = StyleSheet.create({
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
+  danger: {
+    backgroundColor: Colors.error,
+    ...Shadows.sm,
+  },
   
   // Sizes
   sm: {
+    height: 36,
     paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.xs,
   },
   md: {
+    height: 44,
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
   },
   lg: {
+    height: 52,
     paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing.lg,
-    gap: Spacing.md,
   },
   
   // Text styles
   text: {
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
+    textAlign: 'center',
   },
+  
+  // Text variants
   primaryText: {
     color: Colors.textInverse,
   },
@@ -117,6 +176,11 @@ const styles = StyleSheet.create({
   ghostText: {
     color: Colors.primary,
   },
+  dangerText: {
+    color: Colors.textInverse,
+  },
+  
+  // Text sizes
   smText: {
     fontSize: Typography.fontSize.sm,
   },
@@ -127,7 +191,23 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.lg,
   },
   
+  // States
+  fullWidth: {
+    width: '100%',
+  },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.6,
+  },
+  
+  // Icons
+  leftIcon: {
+    marginRight: Spacing.sm,
+  },
+  rightIcon: {
+    marginLeft: Spacing.sm,
+  },
+  
+  loadingIndicator: {
+    // Loading indicator spacing is handled automatically
   },
 });
