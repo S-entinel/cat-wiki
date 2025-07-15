@@ -1,4 +1,3 @@
-// src/context/DatabaseContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DatabaseService } from '../services/DatabaseService';
 import { CatBreed, BreedFilter } from '../types/CatBreed';
@@ -13,8 +12,8 @@ interface DatabaseContextType {
   // Breed operations
   getAllBreeds: () => Promise<void>;
   getBreedById: (id: number) => Promise<CatBreed | null>;
-  searchBreeds: (query: string) => CatBreed[]; // Updated to return synchronously for UI
-  filterBreeds: (filter: BreedFilter, sourceBreeds?: CatBreed[]) => CatBreed[]; // Updated to work with current breeds
+  searchBreeds: (query: string) => CatBreed[];
+  filterBreeds: (filter: BreedFilter, sourceBreeds?: CatBreed[]) => CatBreed[];
   
   // Favorites operations
   getFavorites: () => Promise<void>;
@@ -94,54 +93,71 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     }
   };
 
-  // Updated to work synchronously with current breeds for better UI performance
+  // Synchronous search function for better UI performance
   const searchBreeds = (query: string): CatBreed[] => {
+    if (!query.trim()) return breeds;
+    
     try {
-      if (!query.trim()) {
-        return breeds;
-      }
-      
-      const lowercaseQuery = query.toLowerCase();
-      return breeds.filter(breed => 
-        breed.name.toLowerCase().includes(lowercaseQuery) ||
-        breed.origin.toLowerCase().includes(lowercaseQuery) ||
-        breed.temperament.toLowerCase().includes(lowercaseQuery) ||
-        breed.tica_code.toLowerCase().includes(lowercaseQuery)
+      const searchTerm = query.toLowerCase();
+      return breeds.filter(breed =>
+        breed.name.toLowerCase().includes(searchTerm) ||
+        breed.origin.toLowerCase().includes(searchTerm) ||
+        breed.temperament.toLowerCase().includes(searchTerm) ||
+        breed.coat_pattern?.toLowerCase().includes(searchTerm) ||
+        breed.activity_level.toLowerCase().includes(searchTerm)
       );
     } catch (err) {
       console.error('Error searching breeds:', err);
-      setError('Failed to search breeds');
+      setError('Search failed');
       return [];
     }
   };
 
-  // Updated to work with current breeds and accept optional source breeds
-  const filterBreeds = (filter: BreedFilter, sourceBreeds: CatBreed[] = breeds): CatBreed[] => {
+  // Synchronous filter function for better UI performance
+  const filterBreeds = (filter: BreedFilter, sourceBreeds?: CatBreed[]): CatBreed[] => {
     try {
-      let results = sourceBreeds;
-
-      // Apply filters
-      if (filter.origin) {
-        results = results.filter(breed => breed.origin === filter.origin);
-      }
-
-      if (filter.coatLength) {
-        results = results.filter(breed => breed.coat_length === filter.coatLength);
-      }
-
-      if (filter.bodyType) {
-        results = results.filter(breed => breed.body_type === filter.bodyType);
-      }
-
-      if (filter.activityLevel) {
-        results = results.filter(breed => breed.activity_level === filter.activityLevel);
-      }
-
-      if (filter.groomingLevel) {
-        results = results.filter(breed => breed.grooming_needs === filter.groomingLevel);
-      }
-
-      return results;
+      const breedsToFilter = sourceBreeds || breeds;
+      
+      return breedsToFilter.filter(breed => {
+        // Search query filter
+        if (filter.searchQuery) {
+          const query = filter.searchQuery.toLowerCase();
+          const matchesSearch = 
+            breed.name.toLowerCase().includes(query) ||
+            breed.origin.toLowerCase().includes(query) ||
+            breed.temperament.toLowerCase().includes(query) ||
+            breed.coat_pattern?.toLowerCase().includes(query);
+          
+          if (!matchesSearch) return false;
+        }
+        
+        // Origin filter
+        if (filter.origin && breed.origin !== filter.origin) {
+          return false;
+        }
+        
+        // Coat length filter
+        if (filter.coatLength && breed.coat_length !== filter.coatLength) {
+          return false;
+        }
+        
+        // Body type filter
+        if (filter.bodyType && breed.body_type !== filter.bodyType) {
+          return false;
+        }
+        
+        // Activity level filter
+        if (filter.activityLevel && breed.activity_level !== filter.activityLevel) {
+          return false;
+        }
+        
+        // Grooming level filter
+        if (filter.groomingLevel && breed.grooming_needs !== filter.groomingLevel) {
+          return false;
+        }
+        
+        return true;
+      });
     } catch (err) {
       console.error('Error filtering breeds:', err);
       setError('Failed to filter breeds');
@@ -201,7 +217,6 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       return await db.getSearchHistory();
     } catch (err) {
       console.error('Error getting search history:', err);
-      setError('Failed to load search history');
       return [];
     }
   };
@@ -211,11 +226,10 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await db.addToSearchHistory(query);
     } catch (err) {
       console.error('Error adding to search history:', err);
-      // Don't set error for search history as it's not critical
     }
   };
 
-  // Updated to work synchronously with current breeds for better performance
+  // Synchronous function for better performance
   const getFilterOptions = () => {
     try {
       const origins = [...new Set(breeds.map(breed => breed.origin))].sort();

@@ -64,18 +64,22 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
       social: score > 0 ? 'Social' : 'Independent',
       routine: score > 0 ? 'Routine-loving' : 'Flexible',
       attention: score > 0 ? 'Attention-seeking' : 'Low-maintenance',
-      playfulness: score > 0 ? 'Playful' : 'Serious'
+      playfulness: score > 0 ? 'Playful' : 'Serious',
     };
-    return labels[dimension as keyof typeof labels] || dimension;
+    return labels[dimension as keyof typeof labels] || 'Unknown';
   };
 
   const handleBreedPress = (breed: any) => {
     // @ts-ignore
-    navigation.navigate('BreedDetail', { breed, breedId: breed.id });
+    navigation.navigate('Breeds', {
+      screen: 'BreedDetail',
+      params: { breed }
+    });
   };
 
   const handleRetakeQuiz = () => {
-    navigation.goBack();
+    // @ts-ignore
+    navigation.navigate('PersonalityQuiz');
   };
 
   const handleExploreBreeds = () => {
@@ -86,27 +90,20 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
   const renderPersonalityCard = () => (
     <Card style={styles.personalityCard} shadow="lg">
       <View style={styles.personalityHeader}>
-        <View style={[styles.personalityIcon, { backgroundColor: profile.color }]}>
-          <Text style={styles.personalityEmoji}>{profile.emoji}</Text>
-        </View>
-        <View style={styles.personalityInfo}>
-          <Text style={styles.personalityName}>{profile.name}</Text>
-          <Text style={styles.personalityType}>{personalityType.replace('_', ' ')}</Text>
-        </View>
+        <Text style={styles.personalityType}>{personalityType}</Text>
+        <Text style={styles.personalityDescription}>{profile.description}</Text>
       </View>
       
-      <Text style={styles.personalityDescription}>{profile.description}</Text>
-      
       <View style={styles.traitsContainer}>
-        {profile.traits.map((trait, index) => (
-          <Badge
-            key={index}
-            text={trait}
-            variant="primary"
-            size="sm"
-            style={styles.traitBadge}
-          />
-        ))}
+        <Text style={styles.traitsTitle}>Your Key Traits</Text>
+        <View style={styles.traitsList}>
+          {profile.traits.map((trait, index) => (
+            <View key={index} style={styles.traitItem}>
+              <Text style={styles.traitBullet}>•</Text>
+              <Text style={styles.traitText}>{trait}</Text>
+            </View>
+          ))}
+        </View>
       </View>
     </Card>
   );
@@ -114,15 +111,20 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
   const renderScoreBar = (dimension: string, score: number) => {
     const normalizedScore = Math.max(-2, Math.min(2, score));
     const percentage = ((normalizedScore + 2) / 4) * 100;
-    
+    const color = getScoreColor(normalizedScore);
+
     return (
-      <View style={styles.scoreItem} key={dimension}>
-        <Text style={styles.scoreDimension}>{dimension.charAt(0).toUpperCase() + dimension.slice(1)}</Text>
+      <View key={dimension} style={styles.scoreItem}>
+        <View style={styles.scoreHeader}>
+          <Text style={styles.scoreDimension}>{dimension.charAt(0).toUpperCase() + dimension.slice(1)}</Text>
+          <Text style={styles.scoreValue}>{normalizedScore.toFixed(1)}</Text>
+        </View>
         <View style={styles.scoreBarContainer}>
-          <View style={styles.scoreBar}>
+          <View style={styles.scoreBarBackground}>
+            <View style={[styles.scoreBarFill, { width: `${percentage}%`, backgroundColor: color }]} />
             <LinearGradient
-              colors={[getScoreColor(normalizedScore), getScoreColor(normalizedScore)]}
-              style={[styles.scoreBarFill, { width: `${Math.abs(percentage - 50) * 2}%` }]}
+              colors={[color, `${color}80`]}
+              style={[styles.scoreBarGradient, { width: `${percentage}%` }]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
             />
@@ -134,7 +136,23 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
   };
 
   const renderBreedCard = (breed: any) => {
-    const imageSource = catImages[breed.tica_code as keyof typeof catImages] || catImages['placeholder.jpg'];
+
+    const getImageSource = (breed: any) => {
+      // Try breed.image_path first (should be filename like 'abyssinian.jpg')
+      if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
+        return catImages[breed.image_path as keyof typeof catImages];
+      }
+      
+      // Try name-based key as fallback (convert "Abyssinian" -> "abyssinian.jpg")
+      const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+      if (catImages[nameBasedKey as keyof typeof catImages]) {
+        return catImages[nameBasedKey as keyof typeof catImages];
+      }
+      
+      return catImages['placeholder.jpg'];
+    };
+    
+    const imageSource = getImageSource(breed);
     
     return (
       <TouchableOpacity
@@ -157,6 +175,17 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
       </TouchableOpacity>
     );
   };
+
+
+  const groupBreedsIntoPairs = (breeds: any[]) => {
+    const pairs = [];
+    for (let i = 0; i < breeds.length; i += 2) {
+      pairs.push(breeds.slice(i, i + 2));
+    }
+    return pairs;
+  };
+
+  const breedPairs = groupBreedsIntoPairs(matchingBreeds);
 
   return (
     <>
@@ -188,7 +217,11 @@ export default function QuizResultsScreen({ route }: QuizResultsScreenProps) {
           <Text style={styles.breedsSubtitle}>These breeds match your personality perfectly</Text>
           
           <View style={styles.breedsGrid}>
-            {matchingBreeds.map(breed => renderBreedCard(breed))}
+            {breedPairs.map((pair, pairIndex) => (
+              <View key={pairIndex} style={styles.breedRow}>
+                {pair.map(breed => renderBreedCard(breed))}
+              </View>
+            ))}
           </View>
           
           {matchingBreeds.length === 0 && (
@@ -256,50 +289,49 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
   },
   personalityHeader: {
-    flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Spacing.lg,
   },
-  personalityIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Spacing.lg,
-  },
-  personalityEmoji: {
-    fontSize: 32,
-  },
-  personalityInfo: {
-    flex: 1,
-  },
-  personalityName: {
-    fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.black,
-    color: Colors.text,
-    marginBottom: Spacing.xs,
-  },
   personalityType: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.xxl,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.primary,
+    marginBottom: Spacing.sm,
   },
   personalityDescription: {
     fontSize: Typography.fontSize.base,
-    color: Colors.text,
-    lineHeight: Typography.fontSize.base * 1.5,
-    marginBottom: Spacing.lg,
-    fontWeight: Typography.fontWeight.normal,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
   },
+  
   traitsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    marginTop: Spacing.lg,
+  },
+  traitsTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text,
+    marginBottom: Spacing.md,
+  },
+  traitsList: {
     gap: Spacing.sm,
   },
-  traitBadge: {
-    marginRight: 0,
-    marginBottom: 0,
+  traitItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  traitBullet: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.primary,
+    marginRight: Spacing.sm,
+    fontWeight: Typography.fontWeight.bold,
+  },
+  traitText: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.text,
+    flex: 1,
+    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
   },
   
   scoresCard: {
@@ -319,34 +351,49 @@ const styles = StyleSheet.create({
     gap: Spacing.lg,
   },
   scoreItem: {
-    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  scoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
   scoreDimension: {
     fontSize: Typography.fontSize.base,
     fontWeight: Typography.fontWeight.semibold,
     color: Colors.text,
   },
-  scoreBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  scoreBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: Colors.surfaceVariant,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  scoreBarFill: {
-    height: '100%',
-    borderRadius: BorderRadius.full,
-  },
-  scoreLabel: {
+  scoreValue: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.medium,
     color: Colors.textSecondary,
-    minWidth: 80,
+  },
+  scoreBarContainer: {
+    gap: Spacing.xs,
+  },
+  scoreBarBackground: {
+    height: 8,
+    backgroundColor: Colors.surfaceVariant,
+    borderRadius: BorderRadius.sm,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  scoreBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.sm,
+  },
+  scoreBarGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    height: '100%',
+    borderRadius: BorderRadius.sm,
+  },
+  scoreLabel: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
   },
   
   breedsCard: {
@@ -370,21 +417,24 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   breedsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.md,
+  },
+  breedRow: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: Spacing.md,
   },
   breedCard: {
-    width: (screenWidth - (Spacing.lg * 2) - (Spacing.xl * 2) - Spacing.md) / 2,
+    flex: 1,
     backgroundColor: Colors.surfaceVariant,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    ...Shadows.xs,
+    ...Shadows.sm,
+    maxWidth: (screenWidth - (Spacing.lg * 2) - (Spacing.xl * 2) - Spacing.md) / 2,
   },
   breedImage: {
     width: '100%',
-    height: 100,
+    height: 120,
     backgroundColor: Colors.surfaceVariant,
   },
   breedInfo: {

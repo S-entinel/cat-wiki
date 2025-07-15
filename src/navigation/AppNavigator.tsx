@@ -4,6 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import HomeScreen from '../screens/HomeScreen';
 import BreedsScreen from '../screens/BreedsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
@@ -17,12 +18,6 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 const { width: screenWidth } = Dimensions.get('window');
 
-const getResponsiveFontSize = (baseSize: number) => {
-  if (screenWidth < 375) return baseSize - 1;
-  if (screenWidth > 414) return baseSize + 1;
-  return baseSize;
-};
-
 interface TabIconProps {
   icon: string;
   label: string;
@@ -32,6 +27,14 @@ interface TabIconProps {
 const TabIcon: React.FC<TabIconProps> = ({ icon, label, focused }) => (
   <View style={styles.tabIconContainer}>
     <View style={[styles.iconWrapper, focused && styles.iconWrapperFocused]}>
+      {focused && (
+        <LinearGradient
+          colors={[Colors.primary, Colors.primaryDark]}
+          style={styles.iconGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        />
+      )}
       <Text style={[styles.iconText, focused && styles.iconTextFocused]}>
         {icon}
       </Text>
@@ -40,8 +43,6 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, label, focused }) => (
     <Text 
       style={[styles.tabLabel, focused && styles.tabLabelFocused]} 
       numberOfLines={1}
-      adjustsFontSizeToFit
-      minimumFontScale={0.8}
     >
       {label}
     </Text>
@@ -52,36 +53,16 @@ function BreedsStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerStyle: {
-          backgroundColor: Colors.surface,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.border,
-        },
-        headerTitleStyle: {
-          fontSize: Typography.fontSize.lg,
-          fontWeight: Typography.fontWeight.bold,
-          color: Colors.text,
-        },
-        headerTintColor: Colors.primary
+        headerShown: false, 
       }}
     >
       <Stack.Screen 
         name="BreedsList" 
         component={BreedsScreen}
-        options={{ 
-          title: 'Cat Breeds',
-          headerTitle: 'Breed Collection'
-        }}
       />
       <Stack.Screen 
         name="BreedDetail" 
         component={BreedDetailScreen}
-        options={{ 
-          title: 'Breed Details',
-          headerTitle: 'Breed Information'
-        }}
       />
     </Stack.Navigator>
   );
@@ -92,6 +73,8 @@ function QuizStack() {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
       }}
     >
       <Stack.Screen 
@@ -109,8 +92,7 @@ function QuizStack() {
 function AppTabNavigator() {
   const insets = useSafeAreaInsets();
   
-  const baseTabBarHeight = Platform.OS === 'ios' ? 70 : 65;
-  const tabBarHeight = baseTabBarHeight + (screenWidth < 375 ? -5 : screenWidth > 414 ? 5 : 0);
+  const tabBarHeight = Platform.OS === 'ios' ? 85 : 70;
   
   return (
     <Tab.Navigator
@@ -119,16 +101,17 @@ function AppTabNavigator() {
         tabBarStyle: {
           ...styles.tabBar,
           height: tabBarHeight + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingHorizontal: screenWidth < 375 ? Spacing.xs : Spacing.sm,
+          paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 5 : 10),
+          paddingTop: Platform.OS === 'ios' ? 10 : 8,
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarHideOnKeyboard: true, 
       }}
     >
-      <Tab.Screen 
-        name="Home" 
+      <Tab.Screen
+        name="Home"
         component={HomeScreen}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -136,8 +119,8 @@ function AppTabNavigator() {
           ),
         }}
       />
-      <Tab.Screen 
-        name="Breeds" 
+      <Tab.Screen
+        name="Breeds"
         component={BreedsStack}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -145,8 +128,8 @@ function AppTabNavigator() {
           ),
         }}
       />
-      <Tab.Screen 
-        name="Quiz" 
+      <Tab.Screen
+        name="Quiz"
         component={QuizStack}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -154,8 +137,8 @@ function AppTabNavigator() {
           ),
         }}
       />
-      <Tab.Screen 
-        name="Favorites" 
+      <Tab.Screen
+        name="Favorites"
         component={FavoritesScreen}
         options={{
           tabBarIcon: ({ focused }) => (
@@ -178,65 +161,78 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: Colors.surface,
-    borderTopWidth: 2,
-    borderTopColor: Colors.border,
-    elevation: 12,
-    shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    paddingTop: Spacing.sm,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
+    borderTopWidth: 0, 
+    ...Shadows.xl,
+    elevation: 20,
+    borderTopLeftRadius: BorderRadius.xxl,
+    borderTopRightRadius: BorderRadius.xxl,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
+  
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: Spacing.xs,
+    minHeight: 60,
     flex: 1,
-    paddingVertical: 4,
-    paddingHorizontal: 1,
-    minWidth: screenWidth < 375 ? 60 : 70,
   },
+  
   iconWrapper: {
-    width: screenWidth < 375 ? 36 : 40,
-    height: screenWidth < 375 ? 36 : 40,
-    borderRadius: BorderRadius.lg,
+    width: 50,
+    height: 50,
+    borderRadius: BorderRadius.xxl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
-    backgroundColor: 'transparent',
+    marginBottom: Spacing.xs,
     position: 'relative',
+    overflow: 'hidden',
   },
   iconWrapperFocused: {
-    backgroundColor: Colors.primarySoft,
-    ...Shadows.xs,
+    ...Shadows.lg,
+    transform: [{ scale: 1.1 }],
   },
-  focusIndicator: {
+  
+  iconGradient: {
     position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.full,
-    backgroundColor: Colors.primary,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: BorderRadius.xxl,
   },
+  
   iconText: {
-    fontSize: screenWidth < 375 ? 18 : 20,
+    fontSize: 22,
+    textAlign: 'center',
+    zIndex: 1,
   },
   iconTextFocused: {
-    fontSize: screenWidth < 375 ? 20 : 22,
+    fontSize: 24,
   },
+  
+  focusIndicator: {
+    position: 'absolute',
+    bottom: -8,
+    width: 24,
+    height: 4,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+    ...Shadows.md,
+  },
+  
   tabLabel: {
-    fontSize: getResponsiveFontSize(9),
-    fontWeight: Typography.fontWeight.semibold,
+    fontSize: Typography.fontSize.xs,
+    fontWeight: Typography.fontWeight.medium,
     color: Colors.textTertiary,
     textAlign: 'center',
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    marginTop: 2,
   },
   tabLabelFocused: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.black,
-    fontSize: getResponsiveFontSize(10),
+    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.fontSize.xs + 1,
   },
 });

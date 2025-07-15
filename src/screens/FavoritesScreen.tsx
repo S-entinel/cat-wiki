@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
@@ -58,11 +57,12 @@ export default function FavoritesScreen() {
   // Filter favorites based on search query
   useEffect(() => {
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       const filtered = favorites.filter(breed =>
-        breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        breed.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        breed.temperament.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        breed.tica_code.toLowerCase().includes(searchQuery.toLowerCase())
+        breed.name.toLowerCase().includes(query) ||
+        breed.origin.toLowerCase().includes(query) ||
+        breed.temperament.toLowerCase().includes(query) ||
+        breed.activity_level.toLowerCase().includes(query)
       );
       setFilteredFavorites(filtered);
     } else {
@@ -70,7 +70,6 @@ export default function FavoritesScreen() {
     }
   }, [favorites, searchQuery]);
 
-  // Handlers
   const loadFavorites = async () => {
     try {
       await getFavorites();
@@ -79,30 +78,17 @@ export default function FavoritesScreen() {
     }
   };
 
-  const handleRefresh = useCallback(async () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
-    try {
-      await getFavorites();
-    } catch (error) {
-      console.error('Error refreshing favorites:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  }, [getFavorites]);
-
-  const handleSearch = useCallback((query: string) => {
-    setSearchQuery(query);
-  }, []);
-
-  const clearSearch = useCallback(() => {
-    setSearchQuery('');
-  }, []);
+    await loadFavorites();
+    setRefreshing(false);
+  };
 
   const handleBreedPress = useCallback((breed: CatBreed) => {
-    // @ts-ignore
+    // @ts-ignore - Navigation types
     navigation.navigate('Breeds', {
       screen: 'BreedDetail',
-      params: { breed, breedId: breed.id }
+      params: { breed }
     });
   }, [navigation]);
 
@@ -115,11 +101,27 @@ export default function FavoritesScreen() {
   }, [toggleFavorite]);
 
   const navigateToBreeds = useCallback(() => {
-    // @ts-ignore
+    // @ts-ignore - Navigation types
     navigation.navigate('Breeds');
   }, [navigation]);
 
-  // Get activity level badge variant
+
+  const getImageSource = (breed: CatBreed) => {
+    // Try image_path first (should be the filename like 'abyssinian.jpg')
+    if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
+      return catImages[breed.image_path as keyof typeof catImages];
+    }
+    
+    // Try name-based key as fallback (convert "Abyssinian" -> "abyssinian.jpg")
+    const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    if (catImages[nameBasedKey as keyof typeof catImages]) {
+      return catImages[nameBasedKey as keyof typeof catImages];
+    }
+    
+    // Fallback to placeholder
+    return catImages['placeholder.jpg'];
+  };
+
   const getActivityVariant = (level: string): 'success' | 'warning' | 'error' | 'info' | 'primary' => {
     switch (level) {
       case 'Low': return 'success';
@@ -131,7 +133,6 @@ export default function FavoritesScreen() {
     }
   };
 
-  // Render functions
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <Text style={styles.screenTitle}>Your Favorites</Text>
@@ -139,11 +140,19 @@ export default function FavoritesScreen() {
         {filteredFavorites.length} of {favorites.length} breeds
         {searchQuery && ' matching your search'}
       </Text>
+      
+      {favorites.length > 0 && (
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search your favorites..."
+        />
+      )}
     </View>
   );
 
   const renderBreed = useCallback(({ item }: { item: CatBreed }) => {
-    const imageSource = catImages[item.tica_code as keyof typeof catImages];
+    const imageSource = getImageSource(item);
     
     return (
       <Card
@@ -158,7 +167,7 @@ export default function FavoritesScreen() {
         {/* Image Section */}
         <View style={styles.breedImageContainer}>
           <Image 
-            source={imageSource || { uri: item.image_path }}
+            source={imageSource}
             style={styles.breedImage}
             resizeMode="cover"
           />
@@ -176,267 +185,140 @@ export default function FavoritesScreen() {
               showBackground
             />
           </TouchableOpacity>
-          
-          {/* TICA Code Badge */}
-          <View style={styles.ticaBadge}>
-            <Text style={styles.ticaCode}>{item.tica_code}</Text>
-          </View>
         </View>
         
         {/* Content Section */}
         <View style={styles.breedContent}>
-          {/* Header */}
           <View style={styles.breedHeader}>
             <Text style={styles.breedName} numberOfLines={1}>
               {item.name}
             </Text>
-            <View style={styles.breedOrigin}>
-              <Text style={styles.originEmoji}>📍</Text>
-              <Text style={styles.originText} numberOfLines={1}>
-                {item.origin}
-              </Text>
-            </View>
+            <Badge 
+              text={item.tica_code} 
+              variant="primary" 
+              size="xs" 
+              style={styles.ticaBadge} 
+            />
           </View>
           
-          {/* Details Row */}
-          <View style={styles.breedDetails}>
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Coat:</Text>
-              <Text style={styles.detailValue}>{item.coat_length}</Text>
-            </View>
-            
-            <View style={styles.detailItem}>
-              <Text style={styles.detailLabel}>Activity:</Text>
-              <Badge 
-                text={item.activity_level} 
-                variant={getActivityVariant(item.activity_level)}
-                size="sm"
-              />
-            </View>
-          </View>
-          
-          {/* Stats Row */}
-          <View style={styles.breedStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statEmoji}>⏰</Text>
-              <Text style={styles.statText}>
-                {item.lifespan_min}-{item.lifespan_max} years
-              </Text>
-            </View>
-            
-            <View style={styles.statItem}>
-              <Text style={styles.statEmoji}>⚖️</Text>
-              <Text style={styles.statText}>
-                {item.weight_min_female}-{item.weight_max_male} kg
-              </Text>
-            </View>
-          </View>
-          
-          {/* Temperament */}
-          <Text style={styles.breedTemperament} numberOfLines={2}>
-            {item.temperament}
+          <Text style={styles.breedOrigin} numberOfLines={1}>
+            📍 {item.origin}
           </Text>
+          
+          {/* Stats */}
+          <View style={styles.breedStats}>
+            <View style={styles.statRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Activity</Text>
+                <Badge
+                  text={item.activity_level}
+                  variant={getActivityVariant(item.activity_level)}
+                  size="xs"
+                />
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Coat</Text>
+                <Text style={styles.statValue}>{item.coat_length}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Lifespan</Text>
+                <Text style={styles.statValue}>{item.lifespan_min}-{item.lifespan_max}y</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Temperament */}
+          <View style={styles.temperamentContainer}>
+            {item.temperament.split(',').slice(0, 3).map((temperament, index) => (
+              <Badge
+                key={index}
+                text={temperament.trim()}
+                variant="accent"
+                size="xs"
+                outlined
+                style={styles.temperamentTag}
+              />
+            ))}
+          </View>
         </View>
       </Card>
     );
   }, [handleBreedPress, handleFavoritePress, isFavorite]);
 
-  const renderEmptyState = () => {
-    if (searchQuery.trim() && filteredFavorites.length === 0 && favorites.length > 0) {
-      // No search results in favorites
-      return (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateEmoji}>🔍</Text>
-          <Text style={styles.emptyStateTitle}>No matches found</Text>
-          <Text style={styles.emptyStateText}>
-            None of your favorite breeds match "{searchQuery}". Try a different search term.
-          </Text>
-          <Button
-            title="Clear Search"
-            onPress={clearSearch}
-            variant="outline"
-            style={styles.actionButton}
-          />
-        </View>
-      );
-    }
-
-    if (favorites.length === 0) {
-      // No favorites at all
-      return (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.emptyStateEmoji}>💔</Text>
-          <Text style={styles.emptyStateTitle}>No favorites yet</Text>
-          <Text style={styles.emptyStateText}>
-            Start exploring cat breeds and tap the heart icon to save your favorites here.
-          </Text>
-          <Button
-            title="🔍  Explore Breeds"
-            onPress={navigateToBreeds}
-            variant="primary"
-            style={styles.actionButton}
-          />
-        </View>
-      );
-    }
-
-    return null;
-  };
-
-  const renderLoadingState = () => (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color={Colors.primary} />
-      <Text style={styles.loadingText}>Loading your favorites...</Text>
-    </View>
-  );
-
-  const renderErrorState = () => (
-    <View style={styles.errorContainer}>
-      <Text style={styles.emptyStateEmoji}>😿</Text>
-      <Text style={styles.errorTitle}>Something went wrong</Text>
-      <Text style={styles.errorText}>{error}</Text>
-      <Button
-        title="Try Again"
-        onPress={handleRefresh}
-        variant="primary"
-        style={styles.actionButton}
-      />
-    </View>
-  );
-
-  // Stats summary component
-  const renderStatsCard = () => {
-    if (favorites.length === 0) return null;
-
-    // Calculate some interesting stats
-    const origins = [...new Set(favorites.map(breed => breed.origin))];
-    const activityLevels = favorites.map(breed => breed.activity_level);
-    const mostCommonActivity = activityLevels.sort((a, b) =>
-      activityLevels.filter(v => v === a).length - activityLevels.filter(v => v === b).length
-    ).pop();
-
-    return (
-      <View style={styles.statsSection}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{favorites.length}</Text>
-            <Text style={styles.statLabel}>Favorites</Text>
-          </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{origins.length}</Text>
-            <Text style={styles.statLabel}>Origins</Text>
-          </View>
-          
-          <View style={styles.statDivider} />
-          
-          <View style={styles.statItem}>
-            <Text style={styles.statNumber}>{mostCommonActivity}</Text>
-            <Text style={styles.statLabel}>Most Liked</Text>
-          </View>
-        </View>
-      </View>
-    );
-  };
-
-  // Quick action buttons
-  const renderQuickActions = () => {
-    if (favorites.length === 0) return null;
-
-    return (
-      <View style={styles.quickActionsSection}>
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => {
-            console.log('Share favorites functionality');
-          }}
-        >
-          <Text style={styles.quickActionIcon}>📤</Text>
-          <Text style={styles.quickActionText}>Share</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickAction}
-          onPress={() => {
-            console.log('Export favorites functionality');
-          }}
-        >
-          <Text style={styles.quickActionIcon}>💾</Text>
-          <Text style={styles.quickActionText}>Export</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.quickAction}
+  const renderEmptyState = () => (
+    <View style={styles.emptyStateContainer}>
+      <Text style={styles.emptyStateEmoji}>😸</Text>
+      <Text style={styles.emptyStateTitle}>
+        {searchQuery ? 'No favorites match your search' : 'No favorites yet'}
+      </Text>
+      <Text style={styles.emptyStateText}>
+        {searchQuery 
+          ? 'Try adjusting your search terms to find your favorite breeds'
+          : 'Start exploring cat breeds and tap the heart icon to save your favorites here!'
+        }
+      </Text>
+      {!searchQuery && (
+        <Button
+          title="Discover Breeds"
           onPress={navigateToBreeds}
-        >
-          <Text style={styles.quickActionIcon}>➕</Text>
-          <Text style={styles.quickActionText}>Add More</Text>
-        </TouchableOpacity>
+          variant="primary"
+          size="lg"
+          style={styles.actionButton}
+        />
+      )}
+    </View>
+  );
+
+  if (isLoading && favorites.length === 0) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading your favorites...</Text>
       </View>
     );
-  };
-
-  // Main render
-  if (isLoading && favorites.length === 0) {
-    return renderLoadingState();
   }
 
   if (error && favorites.length === 0) {
-    return renderErrorState();
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Unable to load favorites</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button
+          title="Try Again"
+          onPress={handleRefresh}
+          variant="primary"
+          size="lg"
+        />
+      </View>
+    );
   }
 
   return (
-    <>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
-      <View style={styles.container}>
-        {/* Header */}
-        {renderHeader()}
-
-        {/* Search Bar - only show if there are favorites */}
-        {favorites.length > 0 && (
-          <SearchBar
-            value={searchQuery}
-            onChangeText={handleSearch}
-            onClear={clearSearch}
-            placeholder="Search your favorites..."
+      
+      <FlatList
+        data={filteredFavorites}
+        renderItem={renderBreed}
+        keyExtractor={(item) => item.id?.toString() || item.tica_code}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmptyState}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
           />
-        )}
-
-        {/* Stats Card */}
-        {renderStatsCard()}
-
-        {/* Quick Actions */}
-        {renderQuickActions()}
-
-        {/* Favorites List */}
-        <FlatList
-          data={filteredFavorites}
-          renderItem={renderBreed}
-          keyExtractor={(item) => item.id?.toString() || item.tica_code}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={renderEmptyState}
-          contentContainerStyle={
-            filteredFavorites.length === 0 
-              ? styles.emptyContainer 
-              : styles.listContainer
-          }
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              colors={[Colors.primary]}
-              tintColor={Colors.primary}
-            />
-          }
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={8}
-          windowSize={10}
-          initialNumToRender={6}
-        />
-      </View>
-    </>
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.listContainer,
+          filteredFavorites.length === 0 && styles.emptyListContainer
+        ]}
+        style={styles.list}
+      />
+    </View>
   );
 }
 
@@ -446,14 +328,27 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   
+  // List
+  list: {
+    flex: 1,
+  },
+  listContainer: {
+    flexGrow: 1,
+    paddingBottom: Layout.tabBar.heightSafe,
+  },
+  emptyListContainer: {
+    justifyContent: 'center',
+  },
+  
   // Header
   headerSection: {
+    backgroundColor: Colors.background,
     paddingHorizontal: Layout.content.paddingHorizontal,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
   },
   screenTitle: {
-    fontSize: Typography.fontSize.xxxl,
+    fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.xs,
@@ -462,130 +357,87 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
+    marginBottom: Spacing.lg,
   },
   
   // Breed Cards
   breedCard: {
+    marginHorizontal: Layout.content.paddingHorizontal,
+    borderRadius: BorderRadius.xl,
     overflow: 'hidden',
   },
-  
   breedImageContainer: {
     position: 'relative',
-    height: 200,
+    height: 180,
   },
-  
   breedImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: Colors.surfaceVariant,
   },
-  
   favoriteButton: {
     position: 'absolute',
     top: Spacing.md,
     right: Spacing.md,
   },
   
-  ticaBadge: {
-    position: 'absolute',
-    top: Spacing.md,
-    left: Spacing.md,
-    backgroundColor: Colors.primary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
-  },
-  
-  ticaCode: {
-    fontSize: Typography.fontSize.xs,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.textInverse,
-  },
-  
   breedContent: {
     padding: Spacing.lg,
   },
-  
   breedHeader: {
-    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
   },
-  
   breedName: {
-    fontSize: Typography.fontSize.xl,
+    flex: 1,
+    fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.xs,
   },
-  
+  ticaBadge: {
+    marginLeft: Spacing.sm,
+  },
   breedOrigin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  
-  originEmoji: {
-    fontSize: Typography.fontSize.sm,
-    marginRight: Spacing.xs,
-  },
-  
-  originText: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  breedDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    fontWeight: Typography.fontWeight.semibold,
     marginBottom: Spacing.md,
-  },
-  
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  
-  detailLabel: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    marginRight: Spacing.xs,
-  },
-  
-  detailValue: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.medium,
   },
   
   breedStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: Spacing.md,
   },
-  
-  statItem: {
+  statRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  statItem: {
     flex: 1,
+    alignItems: 'center',
   },
-  
-  statEmoji: {
-    fontSize: Typography.fontSize.sm,
-    marginRight: Spacing.xs,
-  },
-  
-  statText: {
+  statLabel: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
+    marginBottom: Spacing.xs,
   },
-  
-  breedTemperament: {
+  statValue: {
     fontSize: Typography.fontSize.sm,
     color: Colors.text,
-    lineHeight: Typography.fontSize.sm * Typography.lineHeight.normal,
-    fontStyle: 'italic',
+    fontWeight: Typography.fontWeight.bold,
+  },
+  
+  temperamentContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.xs,
+  },
+  temperamentTag: {
+    marginRight: 0,
+    marginBottom: 0,
   },
   
   // Loading States
@@ -654,78 +506,6 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   actionButton: {
-    minWidth: 140,
-  },
-  
-  // Stats Section
-  statsSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingBottom: Spacing.lg,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    ...Shadows.sm,
-  },
-  statNumber: {
-    fontSize: Typography.fontSize.xxl,
-    fontWeight: Typography.fontWeight.black,
-    color: Colors.primary,
-    marginBottom: Spacing.xs,
-    textAlign: 'center',
-  },
-  statLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    textAlign: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: 30,
-    backgroundColor: Colors.border,
-    opacity: 0.5,
-  },
-  
-  // Quick Actions
-  quickActionsSection: {
-    flexDirection: 'row',
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingBottom: Spacing.lg,
-    gap: Spacing.md,
-  },
-  quickAction: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 70,
-    ...Shadows.xs,
-  },
-  quickActionIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginBottom: Spacing.xs,
-  },
-  quickActionText: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    textAlign: 'center',
-  },
-  
-  // List Containers
-  emptyContainer: {
-    flexGrow: 1,
-  },
-  listContainer: {
-    paddingBottom: Layout.tabBar.heightSafe,
+    minWidth: 200,
   },
 });

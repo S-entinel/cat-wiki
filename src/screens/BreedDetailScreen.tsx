@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   StyleSheet, 
@@ -10,7 +9,9 @@ import {
   ActivityIndicator,
   Dimensions,
   StatusBar,
-  Platform
+  Platform,
+  ImageErrorEventData,
+  NativeSyntheticEvent
 } from 'react-native';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,7 +33,7 @@ import {
 } from '../constants/theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const IMAGE_HEIGHT = screenHeight * 0.4;
+const IMAGE_HEIGHT = screenHeight * 0.45; 
 
 type BreedDetailRouteProp = RouteProp<RootStackParamList, 'BreedDetail'>;
 
@@ -45,67 +46,58 @@ export default function BreedDetailScreen({ route }: Props) {
   const { toggleFavorite, isFavorite, getBreedById } = useDatabase();
   const [breed, setBreed] = useState<CatBreed>(route.params.breed);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-  // If we have a breedId, fetch the latest data
+
   useEffect(() => {
     if (route.params.breedId && route.params.breedId !== breed.id) {
-      loadBreedDetails();
+      fetchBreedDetails();
     }
   }, [route.params.breedId]);
 
-  const loadBreedDetails = async () => {
+  const fetchBreedDetails = async () => {
     if (!route.params.breedId) return;
     
     setIsLoading(true);
     try {
-      const latestBreed = await getBreedById(route.params.breedId);
-      if (latestBreed) {
-        setBreed(latestBreed);
+      const breedDetails = await getBreedById(route.params.breedId);
+      if (breedDetails) {
+        setBreed(breedDetails);
       }
     } catch (error) {
-      console.error('Error loading breed details:', error);
+      console.error('Error fetching breed details:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFavoritePress = useCallback(async () => {
-    if (breed.id) {
-      try {
-        await toggleFavorite(breed.id);
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-      }
-    }
-  }, [breed.id, toggleFavorite]);
-
   const handleBackPress = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
-  // Get activity level badge variant
-  const getActivityVariant = (level: string): 'success' | 'warning' | 'error' | 'info' | 'primary' => {
-    switch (level) {
-      case 'Low': return 'success';
-      case 'Low-Medium': return 'warning';
-      case 'Medium': return 'info';
-      case 'Medium-High': return 'primary';
-      case 'High': return 'error';
-      default: return 'primary';
+  const handleFavoritePress = useCallback(async () => {
+    if (breed.id) {
+      await toggleFavorite(breed.id);
     }
+  }, [breed.id, toggleFavorite]);
+
+  const handleImageError = (error: NativeSyntheticEvent<ImageErrorEventData>) => {
+    console.log('Image loading error:', error.nativeEvent.error);
+    setImageError(true);
   };
 
-  // Render temperament tags
   const renderTemperamentTags = () => {
-    const temperamentTraits = breed.temperament.split(',').map(trait => trait.trim());
+    if (!breed.temperament) return null;
+    
+    const temperaments = breed.temperament.split(',').map(t => t.trim());
     
     return (
       <View style={styles.temperamentContainer}>
-        {temperamentTraits.map((trait, index) => (
+        {temperaments.map((temperament, index) => (
           <Badge
             key={index}
-            text={trait}
-            variant="primary"
+            text={temperament}
+            variant="secondary"
             size="sm"
             outlined
             style={styles.temperamentTag}
@@ -115,7 +107,26 @@ export default function BreedDetailScreen({ route }: Props) {
     );
   };
 
-  const imageSource = catImages[breed.tica_code as keyof typeof catImages];
+  const getImageSource = () => {
+    // If there's an error, show placeholder
+    if (imageError) {
+      return catImages['placeholder.jpg'];
+    }
+    
+    // Try breed.image_path first (should be the filename like 'abyssinian.jpg')
+    if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
+      return catImages[breed.image_path as keyof typeof catImages];
+    }
+    
+    // Try name-based key as fallback (convert "Abyssinian" -> "abyssinian.jpg")
+    const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    if (catImages[nameBasedKey as keyof typeof catImages]) {
+      return catImages[nameBasedKey as keyof typeof catImages];
+    }
+    
+    // Ultimate fallback to placeholder
+    return catImages['placeholder.jpg'];
+  };
 
   if (isLoading) {
     return (
@@ -133,15 +144,22 @@ export default function BreedDetailScreen({ route }: Props) {
         {/* Hero Image Section */}
         <View style={styles.imageContainer}>
           <Image 
-            source={imageSource || { uri: breed.image_path }}
+            source={getImageSource()}
             style={styles.heroImage}
             resizeMode="cover"
+            onError={handleImageError}
           />
           
-          {/* Gradient Overlay */}
+          {/* Enhanced Gradient Overlay */}
           <LinearGradient
-            colors={['transparent', 'rgba(0,0,0,0.3)', 'rgba(0,0,0,0.7)']}
+            colors={[
+              'rgba(0,0,0,0)', 
+              'rgba(0,0,0,0.1)', 
+              'rgba(0,0,0,0.4)', 
+              'rgba(0,0,0,0.8)'
+            ]}
             style={styles.imageOverlay}
+            locations={[0, 0.3, 0.7, 1]}
           />
           
           {/* Navigation Header */}
@@ -149,6 +167,7 @@ export default function BreedDetailScreen({ route }: Props) {
             <TouchableOpacity 
               style={styles.backButton}
               onPress={handleBackPress}
+              activeOpacity={0.8}
             >
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
@@ -156,6 +175,7 @@ export default function BreedDetailScreen({ route }: Props) {
             <TouchableOpacity
               style={styles.favoriteButtonHeader}
               onPress={handleFavoritePress}
+              activeOpacity={0.8}
             >
               <AnimatedHeart
                 isFavorite={isFavorite(breed.id!)}
@@ -186,65 +206,67 @@ export default function BreedDetailScreen({ route }: Props) {
         <ScrollView
           style={styles.contentContainer}
           showsVerticalScrollIndicator={false}
+          bounces={true}
         >
           {/* Quick Info Cards */}
           <View style={styles.quickInfoSection}>
             <View style={styles.quickInfoRow}>
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="sm">
+              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
                 <Text style={styles.quickInfoIcon}>🧬</Text>
                 <Text style={styles.quickInfoLabel}>Coat</Text>
                 <Text style={styles.quickInfoValue}>{breed.coat_length}</Text>
               </Card>
               
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="sm">
+              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
                 <Text style={styles.quickInfoIcon}>🏗️</Text>
                 <Text style={styles.quickInfoLabel}>Body Type</Text>
                 <Text style={styles.quickInfoValue}>{breed.body_type}</Text>
               </Card>
               
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="sm">
+              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
                 <Text style={styles.quickInfoIcon}>🎨</Text>
                 <Text style={styles.quickInfoLabel}>Pattern</Text>
-                <Text style={styles.quickInfoValue}>{breed.coat_pattern || 'Various'}</Text>
+                <Text style={styles.quickInfoValue}>{breed.coat_pattern}</Text>
               </Card>
             </View>
           </View>
 
-          {/* Physical Stats Section */}
+          {/* Physical Characteristics */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Physical Characteristics</Text>
+            
             <View style={styles.statsContainer}>
               <View style={styles.statsRow}>
                 <Card style={styles.statCard} variant="elevated" shadow="sm">
                   <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>⏰</Text>
+                    <Text style={styles.statIcon}>⏱️</Text>
                     <Text style={styles.statLabel}>Lifespan</Text>
                   </View>
-                  <Text style={styles.statValue}>{breed.lifespan_min}-{breed.lifespan_max} years</Text>
+                  <Text style={styles.statValue}>
+                    {breed.lifespan_min}-{breed.lifespan_max} years
+                  </Text>
                 </Card>
-
+                
                 <Card style={styles.statCard} variant="elevated" shadow="sm">
                   <View style={styles.statHeader}>
                     <Text style={styles.statIcon}>⚖️</Text>
                     <Text style={styles.statLabel}>Weight</Text>
                   </View>
-                  <Text style={styles.statValue}>{breed.weight_min_female}-{breed.weight_max_male} kg</Text>
+                  <Text style={styles.statValue}>
+                    {breed.weight_min_female}-{breed.weight_max_male} kg
+                  </Text>
                 </Card>
               </View>
-
+              
               <View style={styles.statsRow}>
                 <Card style={styles.statCard} variant="elevated" shadow="sm">
                   <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>⚡</Text>
-                    <Text style={styles.statLabel}>Activity Level</Text>
+                    <Text style={styles.statIcon}>🏃</Text>
+                    <Text style={styles.statLabel}>Activity</Text>
                   </View>
-                  <Badge 
-                    text={breed.activity_level} 
-                    variant={getActivityVariant(breed.activity_level)}
-                    size="sm"
-                  />
+                  <Text style={styles.activityText}>{breed.activity_level}</Text>
                 </Card>
-
+                
                 <Card style={styles.statCard} variant="elevated" shadow="sm">
                   <View style={styles.statHeader}>
                     <Text style={styles.statIcon}>✂️</Text>
@@ -259,7 +281,7 @@ export default function BreedDetailScreen({ route }: Props) {
           {/* Temperament Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Temperament</Text>
-            <Card style={styles.temperamentCard} variant="elevated" shadow="sm">
+            <Card style={styles.temperamentCard} variant="elevated" shadow="md">
               {renderTemperamentTags()}
             </Card>
           </View>
@@ -267,7 +289,7 @@ export default function BreedDetailScreen({ route }: Props) {
           {/* Description Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About This Breed</Text>
-            <Card style={styles.descriptionCard} variant="elevated" shadow="sm">
+            <Card style={styles.descriptionCard} variant="elevated" shadow="md">
               <Text style={styles.description}>{breed.description}</Text>
             </Card>
           </View>
@@ -347,23 +369,25 @@ const styles = StyleSheet.create({
   imageContainer: {
     position: 'relative',
     height: IMAGE_HEIGHT,
+    backgroundColor: Colors.surfaceVariant, 
   },
   heroImage: {
     width: '100%',
     height: '100%',
+    backgroundColor: Colors.surfaceVariant,
   },
   imageOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: '60%',
+    height: '80%', 
   },
   
   // Navigation
   navigationHeader: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 30,
+    top: Platform.OS === 'ios' ? 60 : 40,
     left: 0,
     right: 0,
     flexDirection: 'row',
@@ -373,20 +397,21 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: BorderRadius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
+    ...Shadows.md,
   },
   backIcon: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: Typography.fontSize.xxl,
     color: Colors.textInverse,
     fontWeight: Typography.fontWeight.bold,
+    marginLeft: -2, 
   },
   favoriteButtonHeader: {
-    // AnimatedHeart will handle its own styling
   },
   
   // Hero Content
@@ -405,25 +430,25 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.black,
     color: Colors.textInverse,
     marginBottom: Spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   heroOrigin: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   originIcon: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.lg,
     marginRight: Spacing.xs,
   },
   originText: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.semibold,
     color: Colors.textInverse,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
     textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
+    textShadowRadius: 3,
   },
   
   // Content Container
@@ -450,7 +475,8 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: Spacing.lg,
-    minHeight: 90,
+    minHeight: 100,
+    borderRadius: BorderRadius.lg,
   },
   quickInfoIcon: {
     fontSize: Typography.fontSize.xxl,
@@ -493,6 +519,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
   },
   statHeader: {
     flexDirection: 'row',
@@ -500,7 +527,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   statIcon: {
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.lg,
     marginRight: Spacing.xs,
   },
   statLabel: {
@@ -514,6 +541,11 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontWeight: Typography.fontWeight.semibold,
   },
+  activityText: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+  },
   groomingText: {
     fontSize: Typography.fontSize.sm,
     color: Colors.text,
@@ -523,6 +555,7 @@ const styles = StyleSheet.create({
   // Temperament
   temperamentCard: {
     padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
   },
   temperamentContainer: {
     flexDirection: 'row',
@@ -536,6 +569,7 @@ const styles = StyleSheet.create({
   // Description
   descriptionCard: {
     padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
   },
   description: {
     fontSize: Typography.fontSize.base,
@@ -547,6 +581,7 @@ const styles = StyleSheet.create({
   infoCard: {
     padding: Spacing.lg,
     backgroundColor: Colors.primarySoft,
+    borderRadius: BorderRadius.lg,
   },
   infoHeader: {
     flexDirection: 'row',
@@ -573,6 +608,7 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     backgroundColor: Colors.warningSoft,
     borderColor: Colors.warning,
+    borderRadius: BorderRadius.lg,
   },
   healthTitle: {
     fontSize: Typography.fontSize.lg,
@@ -586,6 +622,6 @@ const styles = StyleSheet.create({
   },
   
   bottomSpacing: {
-    height: Layout.tabBar.heightSafe,
+    height: Layout.tabBar.heightSafe + Spacing.lg,
   },
 });
