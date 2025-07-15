@@ -8,6 +8,8 @@ import HomeScreen from '../screens/HomeScreen';
 import BreedsScreen from '../screens/BreedsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import BreedDetailScreen from '../screens/BreedDetailScreen';
+import PersonalityQuizScreen from '../screens/PersonalityQuizScreen';
+import QuizResultsScreen from '../screens/QuizResultsScreen';
 import { RootStackParamList, RootTabParamList } from '../types/navigation';
 import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 
@@ -85,6 +87,25 @@ function BreedsStack() {
   );
 }
 
+function QuizStack() {
+  return (
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <Stack.Screen 
+        name="PersonalityQuiz" 
+        component={PersonalityQuizScreen}
+      />
+      <Stack.Screen 
+        name="QuizResults" 
+        component={QuizResultsScreen}
+      />
+    </Stack.Navigator>
+  );
+}
+
 function AppTabNavigator() {
   const insets = useSafeAreaInsets();
   
@@ -99,7 +120,7 @@ function AppTabNavigator() {
           ...styles.tabBar,
           height: tabBarHeight + insets.bottom,
           paddingBottom: insets.bottom,
-          paddingHorizontal: screenWidth < 375 ? Spacing.sm : Spacing.md,
+          paddingHorizontal: screenWidth < 375 ? Spacing.xs : Spacing.sm,
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
@@ -121,6 +142,15 @@ function AppTabNavigator() {
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon icon="🐱" label="Breeds" focused={focused} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Quiz" 
+        component={QuizStack}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon icon="🧠" label="Quiz" focused={focused} />
           ),
         }}
       />
@@ -164,13 +194,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     paddingVertical: 4,
-    paddingHorizontal: 2,
-    minWidth: screenWidth < 375 ? 70 : 80,
+    paddingHorizontal: 1,
+    minWidth: screenWidth < 375 ? 60 : 70,
   },
   iconWrapper: {
-    width: screenWidth < 375 ? 40 : 44,
-    height: screenWidth < 375 ? 40 : 44,
-    borderRadius: BorderRadius.xl,
+    width: screenWidth < 375 ? 36 : 40,
+    height: screenWidth < 375 ? 36 : 40,
+    borderRadius: BorderRadius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -191,13 +221,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   iconText: {
-    fontSize: screenWidth < 375 ? 20 : 22,
+    fontSize: screenWidth < 375 ? 18 : 20,
   },
   iconTextFocused: {
-    fontSize: screenWidth < 375 ? 22 : 24,
+    fontSize: screenWidth < 375 ? 20 : 22,
   },
   tabLabel: {
-    fontSize: getResponsiveFontSize(10),
+    fontSize: getResponsiveFontSize(9),
     fontWeight: Typography.fontWeight.semibold,
     color: Colors.textTertiary,
     textAlign: 'center',
@@ -207,6 +237,6 @@ const styles = StyleSheet.create({
   tabLabelFocused: {
     color: Colors.primary,
     fontWeight: Typography.fontWeight.black,
-    fontSize: getResponsiveFontSize(11),
+    fontSize: getResponsiveFontSize(10),
   },
 });
