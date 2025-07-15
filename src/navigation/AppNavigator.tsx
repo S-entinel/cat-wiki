@@ -9,17 +9,16 @@ import BreedsScreen from '../screens/BreedsScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import BreedDetailScreen from '../screens/BreedDetailScreen';
 import { RootStackParamList, RootTabParamList } from '../types/navigation';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants/theme';
+import { Colors, Typography, Spacing, BorderRadius, Shadows } from '../constants/theme';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createStackNavigator<RootStackParamList>();
 const { width: screenWidth } = Dimensions.get('window');
 
-// Responsive font sizes based on screen width
 const getResponsiveFontSize = (baseSize: number) => {
-  if (screenWidth < 375) return baseSize - 1; 
-  if (screenWidth > 414) return baseSize + 1;  
-  return baseSize; // Standard screens
+  if (screenWidth < 375) return baseSize - 1;
+  if (screenWidth > 414) return baseSize + 1;
+  return baseSize;
 };
 
 interface TabIconProps {
@@ -34,6 +33,7 @@ const TabIcon: React.FC<TabIconProps> = ({ icon, label, focused }) => (
       <Text style={[styles.iconText, focused && styles.iconTextFocused]}>
         {icon}
       </Text>
+      {focused && <View style={styles.focusIndicator} />}
     </View>
     <Text 
       style={[styles.tabLabel, focused && styles.tabLabelFocused]} 
@@ -59,7 +59,7 @@ function BreedsStack() {
         },
         headerTitleStyle: {
           fontSize: Typography.fontSize.lg,
-          fontWeight: Typography.fontWeight.semibold,
+          fontWeight: Typography.fontWeight.bold,
           color: Colors.text,
         },
         headerTintColor: Colors.primary
@@ -70,7 +70,7 @@ function BreedsStack() {
         component={BreedsScreen}
         options={{ 
           title: 'Cat Breeds',
-          headerTitle: 'Discover Breeds'
+          headerTitle: 'Breed Collection'
         }}
       />
       <Stack.Screen 
@@ -88,8 +88,7 @@ function BreedsStack() {
 function AppTabNavigator() {
   const insets = useSafeAreaInsets();
   
-  // Calculate responsive tab bar height
-  const baseTabBarHeight = Platform.OS === 'ios' ? 65 : 60;
+  const baseTabBarHeight = Platform.OS === 'ios' ? 70 : 65;
   const tabBarHeight = baseTabBarHeight + (screenWidth < 375 ? -5 : screenWidth > 414 ? 5 : 0);
   
   return (
@@ -100,7 +99,7 @@ function AppTabNavigator() {
           ...styles.tabBar,
           height: tabBarHeight + insets.bottom,
           paddingBottom: insets.bottom,
-          paddingHorizontal: screenWidth < 375 ? Spacing.xs : Spacing.sm,
+          paddingHorizontal: screenWidth < 375 ? Spacing.sm : Spacing.md,
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
@@ -149,44 +148,57 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: Colors.surface,
-    borderTopWidth: 1,
+    borderTopWidth: 2,
     borderTopColor: Colors.border,
-    elevation: 8,
+    elevation: 12,
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    paddingTop: Spacing.xs,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    paddingTop: Spacing.sm,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
   },
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    paddingVertical: 2,
+    paddingVertical: 4,
     paddingHorizontal: 2,
-    minWidth: screenWidth < 375 ? 70 : 80, // Ensure minimum width for text
+    minWidth: screenWidth < 375 ? 70 : 80,
   },
   iconWrapper: {
-    width: screenWidth < 375 ? 36 : 40,
-    height: screenWidth < 375 ? 36 : 40,
+    width: screenWidth < 375 ? 40 : 44,
+    height: screenWidth < 375 ? 40 : 44,
     borderRadius: BorderRadius.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
     backgroundColor: 'transparent',
+    position: 'relative',
   },
   iconWrapperFocused: {
-    backgroundColor: `${Colors.primary}12`,
+    backgroundColor: Colors.primarySoft,
+    ...Shadows.xs,
+  },
+  focusIndicator: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primary,
   },
   iconText: {
-    fontSize: screenWidth < 375 ? 18 : 20,
+    fontSize: screenWidth < 375 ? 20 : 22,
   },
   iconTextFocused: {
-    fontSize: screenWidth < 375 ? 20 : 22,
+    fontSize: screenWidth < 375 ? 22 : 24,
   },
   tabLabel: {
     fontSize: getResponsiveFontSize(10),
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.textTertiary,
     textAlign: 'center',
     includeFontPadding: false,
@@ -194,7 +206,7 @@ const styles = StyleSheet.create({
   },
   tabLabelFocused: {
     color: Colors.primary,
-    fontWeight: Typography.fontWeight.semibold,
+    fontWeight: Typography.fontWeight.black,
     fontSize: getResponsiveFontSize(11),
   },
 });

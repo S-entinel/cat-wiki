@@ -1,4 +1,3 @@
-
 import { Dimensions } from 'react-native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -6,98 +5,117 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const BASE_UNIT = 4;
 
 export const Colors = {
-  // Primary Palette
-  primary: '#5B47FF',
-  primaryLight: '#7B69FF',
-  primaryDark: '#3D29CC',
-  primarySoft: '#F0EDFF',
+  // Multi-pastel Primary Palette
+  primary: '#A8E6CF',
+  primaryLight: '#C8F2E0',
+  primaryDark: '#88D8A3',
+  primarySoft: '#F0FBF4',
   
-  // Secondary Palette
-  secondary: '#FF6B9D',
-  secondaryLight: '#FFB3D1',
-  secondaryDark: '#E5477A',
-  secondarySoft: '#FFF0F5',
+  // Pastel Secondary Palette
+  secondary: '#FFD3A5',
+  secondaryLight: '#FFE1C1',
+  secondaryDark: '#FFC78A',
+  secondarySoft: '#FFF8F0',
   
-  // Accent Colors
-  accent: '#00D4AA',
-  accentLight: '#33E0BB',
-  accentDark: '#00B894',
-  accentSoft: '#E6FFF9',
+  // Pastel Accent Colors
+  accent: '#A8C8EC',
+  accentLight: '#C1D9F0',
+  accentDark: '#8FB6E8',
+  accentSoft: '#F0F6FC',
   
-  background: '#FFFFFF',
+  // Additional pastel colors
+  lavender: '#D4A5FF',
+  lavenderSoft: '#F4F0FF',
+  
+  coral: '#FFB3BA',
+  coralSoft: '#FFF0F2',
+  
+  mint: '#B3FFD9',
+  mintSoft: '#F0FFFA',
+  
+  lemon: '#FFFACD',
+  lemonSoft: '#FFFEF5',
+  
+  sky: '#87CEEB',
+  skySoft: '#F0F8FF',
+  
+  rose: '#FFC0CB',
+  roseSoft: '#FFF5F7',
+  
+  // Neutral pastels
+  background: '#FDFCFF',
   surface: '#FFFFFF',
-  surfaceElevated: '#FFFFFF',
-  surfaceVariant: '#F8FAFC',
+  surfaceElevated: '#FEFEFF',
+  surfaceVariant: '#F5F3F7',
   
-  // Text Colors
-  text: '#0F172A',
-  textSecondary: '#475569',
-  textTertiary: '#94A3B8',
+  // Soft text colors
+  text: '#4A3C5A',
+  textSecondary: '#6B5B7A',
+  textTertiary: '#9B8CAB',
   textInverse: '#FFFFFF',
-  textDisabled: '#CBD5E1',
+  textDisabled: '#C4B8D1',
   
-  // Status Colors
-  success: '#059669',
-  successLight: '#34D399',
-  successDark: '#047857',
-  successSoft: '#ECFDF5',
+  // Pastel status colors
+  success: '#B3E5B3',
+  successLight: '#D1F2D1',
+  successDark: '#99DD99',
+  successSoft: '#F5FDF5',
   
-  warning: '#D97706',
-  warningLight: '#FBBF24',
-  warningDark: '#B45309',
-  warningSoft: '#FFFBEB',
+  warning: '#FFE4B3',
+  warningLight: '#FFF0D1',
+  warningDark: '#FFD799',
+  warningSoft: '#FFFCF5',
   
-  error: '#DC2626',
-  errorLight: '#F87171',
-  errorDark: '#B91C1C',
-  errorSoft: '#FEF2F2',
+  error: '#FFB3B3',
+  errorLight: '#FFD1D1',
+  errorDark: '#FF9999',
+  errorSoft: '#FFF5F5',
   
-  info: '#2563EB',
-  infoLight: '#60A5FA',
-  infoDark: '#1D4ED8',
-  infoSoft: '#EFF6FF',
+  info: '#B3D9FF',
+  infoLight: '#D1E7FF',
+  infoDark: '#99CCFF',
+  infoSoft: '#F0F8FF',
   
-  // Border and UI
-  border: '#E2E8F0',
-  borderFocus: '#93C5FD',
-  overlay: 'rgba(15, 23, 42, 0.8)',
-  shadow: '#0F172A',
+  // Soft borders and UI
+  border: '#E8E0ED',
+  borderFocus: '#D4A5FF',
+  overlay: 'rgba(74, 60, 90, 0.6)',
+  shadow: '#4A3C5A',
 } as const;
 
 export const Spacing = {
-  // Base spacing scale
-  xs: BASE_UNIT,       // 4px
-  sm: BASE_UNIT * 2,   // 8px
-  md: BASE_UNIT * 3,   // 12px
-  lg: BASE_UNIT * 4,   // 16px
-  xl: BASE_UNIT * 5,   // 20px
-  xxl: BASE_UNIT * 6,  // 24px
-  xxxl: BASE_UNIT * 8, // 32px
+  xs: BASE_UNIT,
+  sm: BASE_UNIT * 2,
+  md: BASE_UNIT * 3,
+  lg: BASE_UNIT * 4,
+  xl: BASE_UNIT * 5,
+  xxl: BASE_UNIT * 6,
+  xxxl: BASE_UNIT * 8,
 } as const;
 
 export const BorderRadius = {
   none: 0,
-  xs: 2,
-  sm: 4,
-  md: 6,
-  lg: 8,
-  xl: 12,
-  xxl: 16,
-  xxxl: 24,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 22,
+  xxl: 28,
+  xxxl: 36,
   full: 9999,
 } as const;
 
 export const Typography = {
   fontSize: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    xxl: 24,
-    xxxl: 30,
-    xxxxl: 36,
-    xxxxxl: 48,
+    xs: 11,
+    sm: 13,
+    base: 15,
+    lg: 17,
+    xl: 19,
+    xxl: 23,
+    xxxl: 28,
+    xxxxl: 34,
+    xxxxxl: 44,
   },
   
   fontWeight: {
@@ -111,7 +129,7 @@ export const Typography = {
   },
   
   lineHeight: {
-    tight: 1.25,
+    tight: 1.2,
     normal: 1.4,
     relaxed: 1.6,
     loose: 1.8,
@@ -128,38 +146,38 @@ export const Shadows = {
   },
   xs: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sm: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
   },
   md: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 6,
   },
   lg: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.20,
+    shadowRadius: 20,
+    elevation: 10,
   },
   xl: {
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.25,
-    shadowRadius: 25,
-    elevation: 12,
+    shadowOffset: { width: 0, height: 24 },
+    shadowOpacity: 0.24,
+    shadowRadius: 32,
+    elevation: 16,
   },
 } as const;
 
@@ -197,7 +215,6 @@ export const Layout = {
     borderRadius: BorderRadius.lg,
   },
   
-  // Legacy support
   screenPadding: Spacing.lg,
   cardPadding: Spacing.lg,
   cardMargin: Spacing.md,
@@ -207,7 +224,6 @@ export const Layout = {
   tabBarHeight: 60,
 } as const;
 
-// Helper functions
 export const responsive = {
   isTablet: () => screenWidth >= 768,
   getValue: <T>(mobile: T, tablet?: T): T => {

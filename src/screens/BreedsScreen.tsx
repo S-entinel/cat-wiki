@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -46,7 +46,6 @@ export default function BreedsScreen() {
     isFavorite,
   } = useDatabase();
 
-  // Local state
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredBreeds, setFilteredBreeds] = useState<CatBreed[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -54,18 +53,15 @@ export default function BreedsScreen() {
   const [showFilters, setShowFilters] = useState(false);
   const [imageErrors, setImageErrors] = useState<{[key: string]: boolean}>({});
 
-  // Load breeds when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       loadBreeds();
     }, [])
   );
 
-  // Filter and sort breeds
   useEffect(() => {
     let filtered = breeds;
     
-    // Apply search filter
     if (searchQuery.trim()) {
       filtered = breeds.filter(breed =>
         breed.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -74,7 +70,6 @@ export default function BreedsScreen() {
       );
     }
     
-    // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -125,25 +120,20 @@ export default function BreedsScreen() {
     }
   };
 
-  // Better image source resolution
   const getImageSource = (breed: CatBreed) => {
-    // First try with TICA code
     if (breed.tica_code && catImages[breed.tica_code as keyof typeof catImages]) {
       return catImages[breed.tica_code as keyof typeof catImages];
     }
     
-    // Then try with image_path
     if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
       return catImages[breed.image_path as keyof typeof catImages];
     }
     
-    // Try to construct filename from breed name
     const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
     if (catImages[nameBasedKey as keyof typeof catImages]) {
       return catImages[nameBasedKey as keyof typeof catImages];
     }
     
-    // Fallback to placeholder
     return catImages['placeholder.jpg'];
   };
 
@@ -153,26 +143,27 @@ export default function BreedsScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerSection}>
-      <Text style={styles.screenTitle}>Discover Cat Breeds</Text>
-      <Text style={styles.screenSubtitle}>
-        {filteredBreeds.length} of {breeds.length} breeds
-        {searchQuery && ' matching your search'}
-      </Text>
+      <View style={styles.headerTitleContainer}>
+        <Text style={styles.screenTitle}>Breed Collection</Text>
+        <Text style={styles.screenSubtitle}>
+          {filteredBreeds.length} of {breeds.length} breeds
+          {searchQuery && ' matching your search'}
+        </Text>
+      </View>
       
-      {/* Search Bar */}
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
         placeholder="Search breeds..."
       />
       
-      {/* Filter and Sort Controls */}
       <View style={styles.controlsRow}>
         <TouchableOpacity 
           style={styles.filterButton}
           onPress={() => setShowFilters(!showFilters)}
         >
-          <Text style={styles.filterButtonText}>Filters ▼</Text>
+          <Text style={styles.filterButtonText}>Filters</Text>
+          <Text style={styles.filterIcon}>🔽</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -183,8 +174,9 @@ export default function BreedsScreen() {
           }}
         >
           <Text style={styles.sortButtonText}>
-            Sort: {sortBy === 'name' ? 'Name' : sortBy === 'activity' ? 'Activity' : 'Origin'} ▼
+            Sort: {sortBy === 'name' ? 'Name' : sortBy === 'activity' ? 'Activity' : 'Origin'}
           </Text>
+          <Text style={styles.sortIcon}>🔄</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -200,12 +192,11 @@ export default function BreedsScreen() {
         variant="elevated"
         padding="none"
         margin="none"
-        shadow="sm"
+        shadow="md"
         pressable
         onPress={() => handleBreedPress(item)}
         style={styles.breedCard}
       >
-        {/* Image Section */}
         <View style={styles.breedImageContainer}>
           {!hasImageError ? (
             <Image 
@@ -221,20 +212,20 @@ export default function BreedsScreen() {
             </View>
           )}
           
-          {/* Favorite Button */}
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={() => handleFavoritePress(item.id!)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <AnimatedHeart
-              isFavorite={isFavorite(item.id!)}
+          <View style={styles.imageOverlay}>
+            <TouchableOpacity
+              style={styles.favoriteButton}
               onPress={() => handleFavoritePress(item.id!)}
-            />
-          </TouchableOpacity>
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <AnimatedHeart
+                isFavorite={isFavorite(item.id!)}
+                onPress={() => handleFavoritePress(item.id!)}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
         
-        {/* Content Section */}
         <View style={styles.breedContent}>
           <View style={styles.breedHeader}>
             <Text style={styles.breedName} numberOfLines={1}>
@@ -248,41 +239,40 @@ export default function BreedsScreen() {
             </View>
           </View>
           
-          {/* Breed Stats */}
           <View style={styles.breedStats}>
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Coat:</Text>
-              <Text style={styles.statValue}>{item.coat_length}</Text>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Coat</Text>
+                <Text style={styles.statValue}>{item.coat_length}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Activity</Text>
+                <Badge 
+                  text={item.activity_level}
+                  variant={getActivityVariant(item.activity_level)}
+                  size="sm"
+                />
+              </View>
             </View>
             
             <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Activity:</Text>
-              <Badge 
-                text={item.activity_level}
-                variant={getActivityVariant(item.activity_level)}
-                size="sm"
-                style={styles.activityBadge}
-              />
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Lifespan:</Text>
-              <Text style={styles.statValue}>
-                {item.lifespan_min}-{item.lifespan_max} years
-              </Text>
-            </View>
-            
-            <View style={styles.statRow}>
-              <Text style={styles.statLabel}>Weight:</Text>
-              <Text style={styles.statValue}>
-                {item.weight_min_male}-{item.weight_max_male} kg
-              </Text>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Lifespan</Text>
+                <Text style={styles.statValue}>
+                  {item.lifespan_min}-{item.lifespan_max}y
+                </Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>Weight</Text>
+                <Text style={styles.statValue}>
+                  {item.weight_min_male}-{item.weight_max_male}kg
+                </Text>
+              </View>
             </View>
           </View>
           
-          {/* Temperament Tags */}
           <View style={styles.temperamentContainer}>
-            {item.temperament.split(',').slice(0, 3).map((trait, index) => (
+            {item.temperament.split(',').slice(0, 2).map((trait, index) => (
               <Badge
                 key={index}
                 text={trait.trim()}
@@ -293,7 +283,6 @@ export default function BreedsScreen() {
             ))}
           </View>
           
-          {/* TICA Code */}
           <View style={styles.ticaContainer}>
             <Badge
               text={item.tica_code}
@@ -332,7 +321,7 @@ export default function BreedsScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading cat breeds...</Text>
+        <Text style={styles.loadingText}>Loading breeds...</Text>
       </View>
     );
   }
@@ -352,6 +341,7 @@ export default function BreedsScreen() {
               refreshing={refreshing}
               onRefresh={handleRefresh}
               colors={[Colors.primary]}
+              tintColor={Colors.primary}
             />
           }
           contentContainerStyle={[
@@ -374,7 +364,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   
-  // Loading state
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -389,25 +378,28 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   
-  // Header section
   headerSection: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.lg,
     backgroundColor: Colors.background,
   },
+  headerTitleContainer: {
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
   screenTitle: {
     fontSize: Typography.fontSize.xxxl,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
   screenSubtitle: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
-    marginBottom: Spacing.lg,
+    textAlign: 'center',
+    fontWeight: Typography.fontWeight.medium,
   },
   
-  // Controls
   controlsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -416,53 +408,74 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     flex: 1,
-    backgroundColor: Colors.primarySoft,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primarySoft,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
   },
   filterButtonText: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.primary,
+  },
+  filterIcon: {
+    fontSize: 12,
   },
   sortButton: {
     flex: 1,
-    backgroundColor: Colors.surfaceVariant,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.surfaceVariant,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
   },
   sortButtonText: {
     fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     color: Colors.text,
   },
+  sortIcon: {
+    fontSize: 12,
+  },
   
-  // Breed cards
   breedCard: {
     marginHorizontal: CARD_MARGIN,
     marginBottom: Spacing.lg,
     width: CARD_WIDTH,
     backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   breedImageContainer: {
     position: 'relative',
-    height: 180,
+    height: 200,
     backgroundColor: Colors.surfaceVariant,
   },
   breedImage: {
     width: '100%',
     height: '100%',
   },
+  imageOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
   imageFallback: {
     width: '100%',
     height: '100%',
-    backgroundColor: Colors.surfaceVariant,
+    backgroundColor: Colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.md,
@@ -475,19 +488,18 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     textAlign: 'center',
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
   favoriteButton: {
     position: 'absolute',
-    top: Spacing.sm,
-    right: Spacing.sm,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    top: Spacing.md,
+    right: Spacing.md,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderRadius: BorderRadius.full,
-    padding: Spacing.xs,
+    padding: Spacing.sm,
     ...Shadows.sm,
   },
   
-  // Breed content
   breedContent: {
     padding: Spacing.lg,
   },
@@ -496,7 +508,7 @@ const styles = StyleSheet.create({
   },
   breedName: {
     fontSize: Typography.fontSize.xl,
-    fontWeight: Typography.fontWeight.bold,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.xs,
   },
@@ -511,34 +523,38 @@ const styles = StyleSheet.create({
   breedOrigin: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
   },
   
-  // Stats
   breedStats: {
     marginBottom: Spacing.md,
   },
   statRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: Spacing.sm,
+  },
+  statItem: {
+    flex: 1,
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    backgroundColor: Colors.surfaceVariant,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    marginHorizontal: Spacing.xs,
   },
   statLabel: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
+    marginBottom: 2,
   },
   statValue: {
     fontSize: Typography.fontSize.sm,
     color: Colors.text,
-    fontWeight: Typography.fontWeight.semibold,
-  },
-  activityBadge: {
-    marginLeft: Spacing.sm,
+    fontWeight: Typography.fontWeight.bold,
   },
   
-  // Temperament
   temperamentContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -550,15 +566,13 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   
-  // TICA code
   ticaContainer: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   ticaBadge: {
     marginRight: 0,
   },
   
-  // Empty state
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -585,9 +599,9 @@ const styles = StyleSheet.create({
   },
   refreshButton: {
     paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.xl,
   },
   
-  // List
   listContainer: {
     flexGrow: 1,
   },

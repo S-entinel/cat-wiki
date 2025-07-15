@@ -1,4 +1,3 @@
-// src/components/common/Button.tsx
 import React from 'react';
 import { 
   TouchableOpacity, 
@@ -112,10 +111,11 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     flexDirection: 'row',
     overflow: 'hidden',
-    minHeight: Platform.OS === 'ios' ? 44 : 40, // Ensure minimum touch target
+    minHeight: Platform.OS === 'ios' ? 48 : 44,
+    ...Shadows.sm,
   },
   
   content: {
@@ -125,18 +125,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   
-  // Variants
   primary: {
     backgroundColor: Colors.primary,
-    ...Shadows.sm,
   },
   secondary: {
     backgroundColor: Colors.secondary,
-    ...Shadows.sm,
   },
   outline: {
     backgroundColor: 'transparent',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: Colors.primary,
   },
   ghost: {
@@ -144,34 +141,30 @@ const styles = StyleSheet.create({
   },
   danger: {
     backgroundColor: Colors.error,
-    ...Shadows.sm,
   },
   
-  // Sizes
   sm: {
-    height: 36,
-    paddingHorizontal: Spacing.md,
-    minHeight: 36,
+    height: 40,
+    paddingHorizontal: Spacing.lg,
+    minHeight: 40,
   },
   md: {
-    height: 44,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 44,
+    height: 48,
+    paddingHorizontal: Spacing.xl,
+    minHeight: 48,
   },
   lg: {
-    height: 52,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 52,
+    height: 56,
+    paddingHorizontal: Spacing.xxl,
+    minHeight: 56,
   },
   
-  // Text styles
   text: {
-    fontWeight: Typography.fontWeight.semibold,
+    fontWeight: Typography.fontWeight.bold,
     textAlign: 'center',
     flexShrink: 1,
   },
   
-  // Text variants
   primaryText: {
     color: Colors.textInverse,
   },
@@ -188,7 +181,6 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
   },
   
-  // Text sizes
   smText: {
     fontSize: Typography.fontSize.sm,
     lineHeight: Typography.fontSize.sm * 1.2,
@@ -202,7 +194,6 @@ const styles = StyleSheet.create({
     lineHeight: Typography.fontSize.lg * 1.2,
   },
   
-  // States
   fullWidth: {
     width: '100%',
   },
@@ -210,7 +201,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   
-  // Icons
   leftIcon: {
     marginRight: Spacing.sm,
     alignItems: 'center',

@@ -38,7 +38,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.searchContainer}>
-        <Text style={styles.searchIcon}>🔍</Text>
+        <View style={styles.searchIconContainer}>
+          <Text style={styles.searchIcon}>🔍</Text>
+        </View>
         <TextInput
           style={styles.input}
           value={value}
@@ -66,7 +68,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    // Container styles can be overridden by style prop
+    marginBottom: Spacing.md,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -75,27 +77,38 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: Colors.border,
-    ...Shadows.xs,
+    ...Shadows.sm,
+  },
+  searchIconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.primarySoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
   },
   searchIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginRight: Spacing.sm,
-    color: Colors.textSecondary,
+    fontSize: Typography.fontSize.base,
+    color: Colors.primary,
   },
   input: {
     flex: 1,
     fontSize: Typography.fontSize.base,
     color: Colors.text,
     paddingVertical: 0,
-    fontWeight: Typography.fontWeight.normal,
+    fontWeight: Typography.fontWeight.medium,
   },
   clearButton: {
-    padding: Spacing.xs,
-    marginLeft: Spacing.sm,
+    width: 28,
+    height: 28,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surfaceVariant,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
   },
   clearIcon: {
     fontSize: Typography.fontSize.sm,

@@ -51,18 +51,25 @@ export default function HomeScreen() {
           <View style={styles.heroContent}>
             <View style={styles.heroTextContainer}>
               <Text style={styles.heroTitle}>
-                Cat Breed{'\n'}Encyclopedia
+                Nyandex
               </Text>
               <Text style={styles.heroSubtitle}>
-                Discover the perfect feline companion for your lifestyle
+                Your feline companion finder
               </Text>
               <Text style={styles.heroDescription}>
-                Explore comprehensive information about cat breeds, their characteristics, care requirements, and more.
+                Discover adorable cat breeds with detailed information about their personalities and care.
               </Text>
             </View>
             
             <View style={styles.heroImageContainer}>
-              <Text style={styles.heroEmoji}>🐱</Text>
+              <View style={styles.heroEmojiContainer}>
+                <Text style={styles.heroEmoji}>🐱</Text>
+                <View style={styles.sparkles}>
+                  <Text style={[styles.sparkle, { top: 5, right: 10 }]}>✨</Text>
+                  <Text style={[styles.sparkle, { top: 15, right: 25 }]}>✨</Text>
+                  <Text style={[styles.sparkle, { top: 0, right: 20 }]}>✨</Text>
+                </View>
+              </View>
             </View>
           </View>
         </LinearGradient>
@@ -94,37 +101,37 @@ export default function HomeScreen() {
 
         {/* Features Grid */}
         <View style={styles.featuresSection}>
-          <Text style={styles.sectionTitle}>Why Use Our App?</Text>
+          <Text style={styles.sectionTitle}>Features</Text>
           
           <View style={styles.featuresGrid}>
             <FeatureCard
               icon={<Text style={styles.featureIcon}>🔍</Text>}
-              title="Discover Breeds"
-              description="Browse through hundreds of cat breeds with detailed information"
+              title="Discover"
+              description="Browse cat breeds"
               variant="primary"
               style={styles.featureCardItem}
             />
             
             <FeatureCard
               icon={<Text style={styles.featureIcon}>❤️</Text>}
-              title="Save Favorites"
-              description="Keep track of your favorite breeds for quick access"
+              title="Favorites"
+              description="Save your picks"
               variant="secondary"
               style={styles.featureCardItem}
             />
             
             <FeatureCard
               icon={<Text style={styles.featureIcon}>📊</Text>}
-              title="Compare Cats"
-              description="Learn about temperament, care needs, and characteristics"
+              title="Compare"
+              description="Learn traits"
               variant="accent"
               style={styles.featureCardItem}
             />
             
             <FeatureCard
-              icon={<Text style={styles.featureIcon}>🏠</Text>}
-              title="Find Your Match"
-              description="Discover the perfect cat breed for your lifestyle"
+              icon={<Text style={styles.featureIcon}>🎯</Text>}
+              title="Match"
+              description="Find your perfect cat"
               variant="neutral"
               style={styles.featureCardItem}
             />
@@ -134,24 +141,33 @@ export default function HomeScreen() {
         {/* Stats Section */}
         <View style={styles.statsSection}>
           <Card style={styles.statsCard} variant="elevated" shadow="md">
-            <Text style={styles.statsTitle}>Database Stats</Text>
+            <Text style={styles.statsTitle}>Collection</Text>
             
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: Colors.coralSoft }]}>
+                  <Text style={styles.statIcon}>🐾</Text>
+                </View>
                 <Text style={styles.statNumber}>{breeds.length}</Text>
-                <Text style={styles.statLabel}>Total Breeds</Text>
+                <Text style={styles.statLabel}>Breeds</Text>
               </View>
               
               <View style={styles.statDivider} />
               
               <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: Colors.lavenderSoft }]}>
+                  <Text style={styles.statIcon}>💖</Text>
+                </View>
                 <Text style={styles.statNumber}>{favorites.length}</Text>
-                <Text style={styles.statLabel}>Your Favorites</Text>
+                <Text style={styles.statLabel}>Favorites</Text>
               </View>
               
               <View style={styles.statDivider} />
               
               <View style={styles.statItem}>
+                <View style={[styles.statIconContainer, { backgroundColor: Colors.mintSoft }]}>
+                  <Text style={styles.statIcon}>🌟</Text>
+                </View>
                 <Text style={styles.statNumber}>Daily</Text>
                 <Text style={styles.statLabel}>Updates</Text>
               </View>
@@ -172,54 +188,69 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   
-  // Hero Section
   heroGradient: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxl,
-    borderBottomLeftRadius: BorderRadius.xxl,
-    borderBottomRightRadius: BorderRadius.xxl,
+    borderBottomLeftRadius: BorderRadius.xxxl,
+    borderBottomRightRadius: BorderRadius.xxxl,
   },
   heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 200,
+    minHeight: 180,
   },
   heroTextContainer: {
     flex: 1,
     marginRight: Spacing.lg,
   },
   heroTitle: {
-    fontSize: Platform.OS === 'ios' ? 34 : 32,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Platform.OS === 'ios' ? 38 : 36,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.textInverse,
-    marginBottom: Spacing.md,
-    lineHeight: Platform.OS === 'ios' ? 40 : 38,
+    marginBottom: Spacing.sm,
+    lineHeight: Platform.OS === 'ios' ? 44 : 42,
   },
   heroSubtitle: {
     fontSize: Typography.fontSize.lg,
     color: Colors.textInverse,
-    opacity: 0.9,
+    opacity: 0.95,
     marginBottom: Spacing.md,
-    fontWeight: Typography.fontWeight.medium,
-    lineHeight: Typography.fontSize.lg * 1.3,
+    fontWeight: Typography.fontWeight.semibold,
+    lineHeight: Typography.fontSize.lg * 1.2,
   },
   heroDescription: {
     fontSize: Typography.fontSize.base,
     color: Colors.textInverse,
-    opacity: 0.8,
-    lineHeight: Typography.fontSize.base * 1.4,
+    opacity: 0.85,
+    lineHeight: Typography.fontSize.base * 1.3,
     fontWeight: Typography.fontWeight.normal,
   },
   heroImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  heroEmojiContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroEmoji: {
-    fontSize: 80,
+    fontSize: 56,
+  },
+  sparkles: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+  },
+  sparkle: {
+    position: 'absolute',
+    fontSize: 10,
+    color: Colors.textInverse,
+    opacity: 0.9,
   },
   
-  // Quick Actions
   quickActionsSection: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.xxl,
@@ -230,6 +261,7 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     marginBottom: Spacing.lg,
+    textAlign: 'center',
   },
   quickActionsContainer: {
     gap: Spacing.md,
@@ -237,13 +269,15 @@ const styles = StyleSheet.create({
   primaryAction: {
     backgroundColor: Colors.primary,
     marginBottom: 0,
+    borderRadius: BorderRadius.xl,
   },
   secondaryAction: {
     borderColor: Colors.primary,
     marginBottom: 0,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 2,
   },
   
-  // Features Section
   featuresSection: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
@@ -252,29 +286,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   featureCardItem: {
-    width: (screenWidth - (Spacing.lg * 2) - Spacing.md) / 2,
+    width: (screenWidth - (Spacing.lg * 2) - Spacing.sm) / 2,
     marginHorizontal: 0,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    height: 120,
   },
   featureIcon: {
     fontSize: 24,
   },
   
-  // Stats Section
   statsSection: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
   },
   statsCard: {
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     marginHorizontal: 0,
     marginVertical: 0,
+    borderRadius: BorderRadius.xl,
+    backgroundColor: Colors.surface,
   },
   statsTitle: {
-    fontSize: Typography.fontSize.lg,
+    fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     marginBottom: Spacing.lg,
@@ -289,24 +325,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  statIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  statIcon: {
+    fontSize: 20,
+  },
   statNumber: {
-    fontSize: Typography.fontSize.xxxl,
+    fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.primary,
+    color: Colors.text,
     marginBottom: Spacing.xs,
     textAlign: 'center',
   },
   statLabel: {
-    fontSize: Typography.fontSize.sm,
+    fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.semibold,
     textAlign: 'center',
   },
   statDivider: {
-    width: 1,
+    width: 2,
     height: 40,
     backgroundColor: Colors.border,
-    opacity: 0.5,
+    borderRadius: BorderRadius.full,
     marginHorizontal: Spacing.sm,
   },
 });

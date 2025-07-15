@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import { Colors, BorderRadius, Spacing, Typography } from '../../constants/theme';
+import { Colors, BorderRadius, Spacing, Typography, Shadows } from '../../constants/theme';
 
 interface BadgeProps {
   text: string;
@@ -49,31 +48,30 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: BorderRadius.full,
     alignSelf: 'flex-start',
+    ...Shadows.xs,
   },
   
-  // Sizes
   xs: {
-    paddingHorizontal: Spacing.xs,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 2,
-    minHeight: 16,
+    minHeight: 18,
   },
   sm: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    minHeight: 20,
-  },
-  md: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
-    minHeight: 24,
+    minHeight: 22,
   },
-  lg: {
+  md: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
-    minHeight: 32,
+    minHeight: 28,
+  },
+  lg: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+    minHeight: 36,
   },
   
-  // Filled variants
   primary: {
     backgroundColor: Colors.primary,
   },
@@ -99,55 +97,52 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textSecondary,
   },
   
-  // Outlined variants
   primaryOutlined: {
     backgroundColor: Colors.primarySoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.primary,
   },
   secondaryOutlined: {
     backgroundColor: Colors.secondarySoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.secondary,
   },
   accentOutlined: {
     backgroundColor: Colors.accentSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.accent,
   },
   successOutlined: {
     backgroundColor: Colors.successSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.success,
   },
   warningOutlined: {
     backgroundColor: Colors.warningSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.warning,
   },
   errorOutlined: {
     backgroundColor: Colors.errorSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.error,
   },
   infoOutlined: {
     backgroundColor: Colors.infoSoft,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.info,
   },
   neutralOutlined: {
     backgroundColor: Colors.surfaceVariant,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.border,
   },
   
-  // Base text styles
   text: {
-    fontWeight: Typography.fontWeight.medium,
+    fontWeight: Typography.fontWeight.bold,
     textAlign: 'center',
   },
   
-  // Text sizes
   xsText: {
     fontSize: Typography.fontSize.xs,
     lineHeight: Typography.fontSize.xs * 1.2,
@@ -165,7 +160,6 @@ const styles = StyleSheet.create({
     lineHeight: Typography.fontSize.base * 1.2,
   },
   
-  // Filled text colors
   primaryText: {
     color: Colors.textInverse,
   },
@@ -191,7 +185,6 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
   },
   
-  // Outlined text colors
   primaryOutlinedText: {
     color: Colors.primary,
   },
