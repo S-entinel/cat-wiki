@@ -25,30 +25,49 @@ export default function HomeScreen() {
   const { breeds, favorites } = useDatabase();
   const insets = useSafeAreaInsets();
 
-  // Animations
+  // Enhanced Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const scaleAnim = useRef(new Animated.Value(0.9)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const floatingAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Staggered entrance animation
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
+    // Staggered entrance animation with smoother timing
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 80,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 60,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Floating animation for decorative elements
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatingAnim, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatingAnim, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
     ]).start();
   }, []);
 
@@ -68,13 +87,25 @@ export default function HomeScreen() {
   };
 
   const FloatingActionButton = ({ icon, onPress, color = Colors.primary }: any) => (
-    <TouchableOpacity
-      style={[styles.fab, { backgroundColor: color }]}
-      onPress={onPress}
-      activeOpacity={0.8}
-    >
-      <Text style={styles.fabIcon}>{icon}</Text>
-    </TouchableOpacity>
+    <Animated.View style={[
+      styles.fabContainer,
+      {
+        transform: [{
+          scale: scaleAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.8, 1],
+          })
+        }]
+      }
+    ]}>
+      <TouchableOpacity
+        style={[styles.fab, { backgroundColor: color }]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.fabIcon}>{icon}</Text>
+      </TouchableOpacity>
+    </Animated.View>
   );
 
   return (
@@ -82,15 +113,16 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScrollView 
         style={styles.container}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        bounces={true}
       >
         {/* Enhanced Hero Section */}
         <LinearGradient
-          colors={[Colors.primary, Colors.primaryDark, '#1a365d']}
-          style={[styles.heroGradient, { paddingTop: insets.top + 30 }]}
+          colors={[Colors.primary, Colors.primaryDark, Colors.accent]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
+          style={[styles.heroGradient, { paddingTop: insets.top + 20 }]}
         >
           <Animated.View 
             style={[
@@ -102,35 +134,105 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.heroTextContainer}>
-              <Text style={styles.appName}>Nyandex</Text>
-              <Text style={styles.heroTitle}>
-                Find Your Perfect{'\n'}
-                <Text style={styles.heroTitleAccent}>Feline Friend</Text>
-              </Text>
-              <Text style={styles.heroDescription}>
-                Discover cat breeds that match your lifestyle with our personality quiz and comprehensive breed database.
-              </Text>
+              <Animated.Text 
+                style={[
+                  styles.appName,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 0.8],
+                    })
+                  }
+                ]}
+              >
+                Purrfect Companion
+              </Animated.Text>
+              
+              <Animated.View style={{
+                transform: [{ scale: scaleAnim }]
+              }}>
+                <Text style={styles.heroTitle}>
+                  Find Your{'\n'}
+                  <Text style={styles.heroTitleAccent}>Purrfect Match</Text>
+                </Text>
+              </Animated.View>
+              
+              <Animated.Text 
+                style={[
+                  styles.heroDescription,
+                  {
+                    opacity: fadeAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0, 0.9],
+                    })
+                  }
+                ]}
+              >
+                Explore feline breeds, discover your personality match, and find the cat that's meant to be your companion
+              </Animated.Text>
             </View>
-            
+
+            {/* Enhanced Hero Visual */}
             <Animated.View 
               style={[
                 styles.heroVisual,
-                { transform: [{ scale: scaleAnim }] }
+                {
+                  transform: [{ scale: scaleAnim }]
+                }
               ]}
             >
               <View style={styles.catContainer}>
                 <Text style={styles.heroEmoji}>🐱</Text>
-                <View style={styles.floatingElements}>
-                  <Text style={[styles.floatingElement, styles.heart1]}>💖</Text>
-                  <Text style={[styles.floatingElement, styles.star1]}>⭐</Text>
-                  <Text style={[styles.floatingElement, styles.heart2]}>💕</Text>
-                </View>
+                
+                {/* Simplified Floating Elements */}
+                <Animated.View 
+                  style={[
+                    styles.floatingElements,
+                    {
+                      transform: [{
+                        translateY: floatingAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0, -8],
+                        })
+                      }]
+                    }
+                  ]}
+                >
+                  <Animated.Text 
+                    style={[
+                      styles.floatingElement,
+                      styles.heart1,
+                      {
+                        opacity: floatingAnim.interpolate({
+                          inputRange: [0, 0.5, 1],
+                          outputRange: [0.6, 1, 0.6],
+                        })
+                      }
+                    ]}
+                  >
+                    💝
+                  </Animated.Text>
+                  <Animated.Text 
+                    style={[
+                      styles.floatingElement,
+                      styles.star1,
+                      {
+                        opacity: floatingAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [0.8, 0.4],
+                        })
+                      }
+                    ]}
+                  >
+                    🐾
+                  </Animated.Text>
+                </Animated.View>
               </View>
             </Animated.View>
           </Animated.View>
         </LinearGradient>
 
-        {/* Quick Actions with Modern Cards */}
+        {/* Enhanced Quick Actions Section */}
         <Animated.View 
           style={[
             styles.quickActionsSection,
@@ -140,13 +242,13 @@ export default function HomeScreen() {
             }
           ]}
         >
-          <Text style={styles.sectionTitle}>Quick Start</Text>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
           
           <View style={styles.quickActionsGrid}>
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.actionCard}
-              onPress={navigateToQuiz}
-              activeOpacity={0.9}
+              onPress={navigateToBreeds}
+              activeOpacity={0.8}
             >
               <LinearGradient
                 colors={[Colors.primary, Colors.primaryDark]}
@@ -154,40 +256,39 @@ export default function HomeScreen() {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.actionCardIcon}>🧠</Text>
-                <Text style={styles.actionCardTitle}>Take Quiz</Text>
-                <Text style={styles.actionCardSubtitle}>Find your match</Text>
+                <Text style={styles.actionCardTitle}>Explore Breeds</Text>
+                <Text style={styles.actionCardSubtitle}>Browse all cat breeds</Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <TouchableOpacity 
               style={styles.actionCard}
-              onPress={navigateToBreeds}
-              activeOpacity={0.9}
+              onPress={navigateToQuiz}
+              activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[Colors.secondary, '#e2a857']}
+                colors={[Colors.accent, Colors.secondary]}
                 style={styles.actionCardGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.actionCardIcon}>🔍</Text>
-                <Text style={styles.actionCardTitle}>Explore</Text>
-                <Text style={styles.actionCardSubtitle}>Browse breeds</Text>
+                <Text style={styles.actionCardTitle}>Find Your Match</Text>
+                <Text style={styles.actionCardSubtitle}>Take personality quiz</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity
+          {/* Enhanced Favorites Action Card */}
+          <TouchableOpacity 
             style={styles.favoriteActionCard}
             onPress={navigateToFavorites}
-            activeOpacity={0.9}
+            activeOpacity={0.8}
           >
             <View style={styles.favoriteCardContent}>
               <View style={styles.favoriteCardLeft}>
-                <Text style={styles.favoriteCardIcon}>❤️</Text>
+                <Text style={styles.favoriteCardIcon}>♥</Text>
                 <View>
-                  <Text style={styles.favoriteCardTitle}>My Favorites</Text>
+                  <Text style={styles.favoriteCardTitle}>Your Favorites</Text>
                   <Text style={styles.favoriteCardCount}>
                     {favorites.length} saved breed{favorites.length !== 1 ? 's' : ''}
                   </Text>
@@ -209,22 +310,22 @@ export default function HomeScreen() {
           ]}
         >
           <Card style={styles.statsCard} shadow="lg">
-            <Text style={styles.statsTitle}>Your Collection</Text>
+            <Text style={styles.statsTitle}>Your Cat Journey</Text>
             
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
                 <View style={[styles.statIconContainer, { backgroundColor: Colors.mintSoft }]}>
-                  <Text style={styles.statIcon}>🐾</Text>
+                  <Text style={styles.statIcon}>♦</Text>
                 </View>
                 <Text style={styles.statNumber}>{breeds.length}</Text>
-                <Text style={styles.statLabel}>Total Breeds</Text>
+                <Text style={styles.statLabel}>Cat Breeds</Text>
               </View>
               
               <View style={styles.statDivider} />
               
               <View style={styles.statItem}>
                 <View style={[styles.statIconContainer, { backgroundColor: Colors.coralSoft }]}>
-                  <Text style={styles.statIcon}>💖</Text>
+                  <Text style={styles.statIcon}>♥</Text>
                 </View>
                 <Text style={styles.statNumber}>{favorites.length}</Text>
                 <Text style={styles.statLabel}>Favorites</Text>
@@ -234,71 +335,22 @@ export default function HomeScreen() {
               
               <View style={styles.statItem}>
                 <View style={[styles.statIconContainer, { backgroundColor: Colors.skySoft }]}>
-                  <Text style={styles.statIcon}>🌟</Text>
+                  <Text style={styles.statIcon}>♠</Text>
                 </View>
-                <Text style={styles.statNumber}>New</Text>
-                <Text style={styles.statLabel}>Features</Text>
+                <Text style={styles.statNumber}>Quiz</Text>
+                <Text style={styles.statLabel}>Ready</Text>
               </View>
             </View>
           </Card>
         </Animated.View>
-
-        {/* Features Grid with Better Mobile Layout */}
-        <Animated.View 
-          style={[
-            styles.featuresSection,
-            {
-              opacity: fadeAnim,
-              transform: [{ translateY: slideAnim }],
-            }
-          ]}
-        >
-          <Text style={styles.sectionTitle}>Discover Features</Text>
-          
-          <View style={styles.featuresGrid}>
-            <FeatureCard
-              icon={<Text style={styles.featureIcon}>📊</Text>}
-              title="Compare Breeds"
-              description="Side-by-side comparisons"
-              variant="primary"
-              style={styles.featureCardItem}
-            />
-            
-            <FeatureCard
-              icon={<Text style={styles.featureIcon}>📚</Text>}
-              title="Learn More"
-              description="Detailed breed guides"
-              variant="secondary"
-              style={styles.featureCardItem}
-            />
-            
-            <FeatureCard
-              icon={<Text style={styles.featureIcon}>🎯</Text>}
-              title="Perfect Match"
-              description="AI-powered recommendations"
-              variant="accent"
-              style={styles.featureCardItem}
-            />
-            
-            <FeatureCard
-              icon={<Text style={styles.featureIcon}>📱</Text>}
-              title="Mobile First"
-              description="Optimized experience"
-              variant="neutral"
-              style={styles.featureCardItem}
-            />
-          </View>
-        </Animated.View>
       </ScrollView>
 
-      {/* Floating Action Button */}
-      <View style={styles.fabContainer}>
-        <FloatingActionButton 
-          icon="🧠" 
-          onPress={navigateToQuiz}
-          color={Colors.accent}
-        />
-      </View>
+      {/* Enhanced Floating Action Button */}
+      <FloatingActionButton 
+        icon="Quiz" 
+        onPress={navigateToQuiz}
+        color={Colors.accent}
+      />
     </>
   );
 }
@@ -314,37 +366,38 @@ const styles = StyleSheet.create({
   
   // Enhanced Hero Section
   heroGradient: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.xxxl * 1.5,
     borderBottomLeftRadius: BorderRadius.xxxl,
     borderBottomRightRadius: BorderRadius.xxxl,
-    minHeight: screenHeight * 0.5,
+    minHeight: screenHeight * 0.52,
   },
   heroContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 220,
+    minHeight: 240,
+    paddingVertical: Spacing.xl,
   },
   heroTextContainer: {
     flex: 1,
-    marginRight: Spacing.lg,
+    marginRight: Spacing.xl,
   },
   appName: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.textInverse,
-    opacity: 0.8,
-    marginBottom: Spacing.xs,
-    letterSpacing: 2,
+    opacity: 0.85,
+    marginBottom: Spacing.sm,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
   heroTitle: {
-    fontSize: Platform.OS === 'ios' ? 34 : 32,
+    fontSize: Platform.OS === 'ios' ? 36 : 34,
     fontWeight: Typography.fontWeight.black,
     color: Colors.textInverse,
-    marginBottom: Spacing.lg,
-    lineHeight: Platform.OS === 'ios' ? 40 : 38,
+    marginBottom: Spacing.xl,
+    lineHeight: Platform.OS === 'ios' ? 42 : 40,
   },
   heroTitleAccent: {
     color: Colors.accent,
@@ -353,7 +406,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textInverse,
     opacity: 0.9,
-    lineHeight: Typography.fontSize.base * 1.5,
+    lineHeight: Typography.fontSize.base * 1.6,
     fontWeight: Typography.fontWeight.normal,
   },
   heroVisual: {
@@ -364,43 +417,38 @@ const styles = StyleSheet.create({
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
-    width: 100,
-    height: 100,
+    width: 110,
+    height: 110,
   },
   heroEmoji: {
-    fontSize: 64,
+    fontSize: 68,
     textAlign: 'center',
   },
   floatingElements: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    top: -10,
-    left: -10,
+    width: 130,
+    height: 130,
+    top: -15,
+    left: -15,
   },
   floatingElement: {
     position: 'absolute',
-    fontSize: 16,
+    fontSize: 18,
   },
   heart1: {
-    top: 5,
-    right: 15,
-    fontSize: 14,
+    top: 8,
+    right: 18,
+    fontSize: 16,
   },
   star1: {
-    top: 25,
-    right: 5,
-    fontSize: 12,
-  },
-  heart2: {
-    top: 15,
-    left: 10,
-    fontSize: 10,
+    top: 30,
+    right: 8,
+    fontSize: 14,
   },
   
-  // Modern Quick Actions
+  // Enhanced Quick Actions
   quickActionsSection: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xxxl,
     paddingBottom: Spacing.xl,
   },
@@ -408,16 +456,16 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
     color: Colors.text,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   quickActionsGrid: {
     flexDirection: 'row',
-    gap: Spacing.md,
-    marginBottom: Spacing.lg,
+    gap: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   actionCard: {
     flex: 1,
-    height: 120,
+    height: 130,
     borderRadius: BorderRadius.xl,
     overflow: 'hidden',
     ...Shadows.lg,
@@ -428,26 +476,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  actionCardIcon: {
-    fontSize: 32,
-    marginBottom: Spacing.sm,
-  },
   actionCardTitle: {
     fontSize: Typography.fontSize.lg,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.textInverse,
     marginBottom: Spacing.xs,
+    textAlign: 'center',
   },
   actionCardSubtitle: {
     fontSize: Typography.fontSize.sm,
     color: Colors.textInverse,
     opacity: 0.9,
+    textAlign: 'center',
   },
   
   favoriteActionCard: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
+    padding: Spacing.xl,
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -463,8 +509,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   favoriteCardIcon: {
-    fontSize: 24,
-    marginRight: Spacing.md,
+    fontSize: 28,
+    marginRight: Spacing.lg,
   },
   favoriteCardTitle: {
     fontSize: Typography.fontSize.lg,
@@ -485,7 +531,7 @@ const styles = StyleSheet.create({
   
   // Enhanced Stats
   statsSection: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xl,
   },
   statsCard: {
@@ -497,7 +543,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
     textAlign: 'center',
   },
   statsContainer: {
@@ -510,8 +556,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statIconContainer: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
@@ -519,7 +565,7 @@ const styles = StyleSheet.create({
     ...Shadows.sm,
   },
   statIcon: {
-    fontSize: 24,
+    fontSize: 26,
   },
   statNumber: {
     fontSize: Typography.fontSize.xxl,
@@ -535,7 +581,7 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 2,
-    height: 50,
+    height: 55,
     backgroundColor: Colors.border,
     borderRadius: BorderRadius.full,
     marginHorizontal: Spacing.sm,
@@ -543,42 +589,42 @@ const styles = StyleSheet.create({
   
   // Enhanced Features
   featuresSection: {
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
     paddingBottom: Spacing.xl,
   },
   featuresGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    gap: Spacing.md,
+    gap: Spacing.lg,
   },
   featureCardItem: {
-    width: (screenWidth - (Spacing.lg * 2) - Spacing.md) / 2,
-    height: 140,
-    marginBottom: Spacing.md,
+    width: (screenWidth - (Spacing.xl * 2) - Spacing.lg) / 2,
+    height: 150,
+    marginBottom: Spacing.lg,
   },
   featureIcon: {
-    fontSize: 28,
+    fontSize: 30,
   },
   
-  // Floating Action Button
+  // Enhanced Floating Action Button
   fabContainer: {
     position: 'absolute',
     bottom: 100, 
-    right: Spacing.lg,
+    right: Spacing.xl,
   },
   fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: Colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     ...Shadows.xl,
-    elevation: 8,
+    elevation: 12,
   },
   fabIcon: {
-    fontSize: 24,
+    fontSize: 26,
     color: Colors.textInverse,
   },
 });

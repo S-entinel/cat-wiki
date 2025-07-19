@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDatabase } from '../context/DatabaseContext';
 import { CatBreed } from '../types/CatBreed';
 import { Card } from '../components/common/Card';
@@ -30,9 +31,7 @@ import {
   Shadows
 } from '../constants/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
-const CARD_MARGIN = Spacing.md;
-const CARD_WIDTH = screenWidth - (CARD_MARGIN * 2);
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function BreedsScreen() {
   const navigation = useNavigation();
@@ -62,29 +61,28 @@ export default function BreedsScreen() {
   useEffect(() => {
     let filtered = breeds;
 
-    // Search filtering
+    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = breeds.filter(breed =>
         breed.name.toLowerCase().includes(query) ||
         breed.origin.toLowerCase().includes(query) ||
         breed.temperament.toLowerCase().includes(query) ||
-        breed.coat_pattern?.toLowerCase().includes(query) ||
         breed.activity_level.toLowerCase().includes(query)
       );
     }
 
-    // Sorting
+    // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'origin':
-          return a.origin.localeCompare(b.origin);
         case 'activity':
           return a.activity_level.localeCompare(b.activity_level);
+        case 'origin':
+          return a.origin.localeCompare(b.origin);
         default:
-          return a.name.localeCompare(b.name);
+          return 0;
       }
     });
 
@@ -107,7 +105,10 @@ export default function BreedsScreen() {
 
   const handleBreedPress = useCallback((breed: CatBreed) => {
     // @ts-ignore - Navigation types
-    navigation.navigate('BreedDetail', { breed });
+    navigation.navigate('Breeds', {
+      screen: 'BreedDetail',
+      params: { breed }
+    });
   }, [navigation]);
 
   const handleFavoritePress = useCallback(async (breedId: number) => {
@@ -117,7 +118,6 @@ export default function BreedsScreen() {
       console.error('Error toggling favorite:', error);
     }
   }, [toggleFavorite]);
-
 
   const getImageSource = (breed: CatBreed) => {
     // Try image_path first (should be the filename like 'abyssinian.jpg')
@@ -149,7 +149,7 @@ export default function BreedsScreen() {
   const renderHeader = () => (
     <View style={styles.headerSection}>
       <View style={styles.headerTitleContainer}>
-        <Text style={styles.screenTitle}>Breed Collection</Text>
+        <Text style={styles.screenTitle}>Cat Breed Collection</Text>
         <Text style={styles.screenSubtitle}>
           {filteredBreeds.length} of {breeds.length} breeds
           {searchQuery && ' matching your search'}
@@ -159,7 +159,7 @@ export default function BreedsScreen() {
       <SearchBar
         value={searchQuery}
         onChangeText={setSearchQuery}
-        placeholder="Search breeds..."
+        placeholder="Search cat breeds..."
       />
       
       <View style={styles.controlsRow}>
@@ -168,7 +168,7 @@ export default function BreedsScreen() {
           onPress={() => setShowFilters(!showFilters)}
         >
           <Text style={styles.filterButtonText}>Filters</Text>
-          <Text style={styles.filterIcon}>🔽</Text>
+          <Text style={styles.filterIcon}>▼</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -181,7 +181,7 @@ export default function BreedsScreen() {
           <Text style={styles.sortButtonText}>
             Sort: {sortBy === 'name' ? 'Name' : sortBy === 'activity' ? 'Activity' : 'Origin'}
           </Text>
-          <Text style={styles.sortIcon}>🔄</Text>
+          <Text style={styles.sortIcon}>↕</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -195,11 +195,12 @@ export default function BreedsScreen() {
         variant="elevated"
         padding="none"
         margin="none"
-        shadow="md"
+        shadow="lg"
         pressable
         onPress={() => handleBreedPress(item)}
         style={styles.breedCard}
       >
+        {/* Enhanced Image Container */}
         <View style={styles.breedImageContainer}>
           <Image 
             source={imageSource}
@@ -207,27 +208,24 @@ export default function BreedsScreen() {
             resizeMode="cover"
           />
           
-          {/* Favorite Button */}
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={() => handleFavoritePress(item.id!)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
+          {/* Subtle gradient overlay for better text readability */}
+          <LinearGradient
+            colors={['transparent', 'rgba(0,0,0,0.4)']}
+            style={styles.imageOverlay}
+          />
+          
+          {/* Enhanced Favorite Button */}
+          <View style={styles.favoriteButton}>
             <AnimatedHeart
               isFavorite={isFavorite(item.id!)}
               onPress={() => handleFavoritePress(item.id!)}
               size="md"
               showBackground
             />
-          </TouchableOpacity>
-        </View>
-        
-        {/* Breed Info */}
-        <View style={styles.breedContent}>
-          <View style={styles.breedHeader}>
-            <Text style={styles.breedName} numberOfLines={1}>
-              {item.name}
-            </Text>
+          </View>
+          
+          {/* TICA Code Badge on Image */}
+          <View style={styles.ticaBadgeContainer}>
             <Badge 
               text={item.tica_code} 
               variant="primary" 
@@ -235,32 +233,46 @@ export default function BreedsScreen() {
               style={styles.ticaBadge} 
             />
           </View>
+        </View>
+        
+        {/* Enhanced Content Section */}
+        <View style={styles.breedContent}>
+          <View style={styles.breedHeader}>
+            <Text style={styles.breedName} numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Badge
+              text={item.activity_level}
+              variant={getActivityVariant(item.activity_level)}
+              size="xs"
+            />
+          </View>
           
           <Text style={styles.breedOrigin} numberOfLines={1}>
-            📍 {item.origin}
+            {item.origin}
           </Text>
           
-          {/* Stats Row */}
+          {/* Enhanced Stats Row */}
           <View style={styles.breedStats}>
-            <View style={styles.statRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Activity</Text>
-                <Text style={styles.statValue}>{item.activity_level}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Coat</Text>
-                <Text style={styles.statValue}>{item.coat_length}</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>Lifespan</Text>
-                <Text style={styles.statValue}>{item.lifespan_min}-{item.lifespan_max}y</Text>
-              </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Coat</Text>
+              <Text style={styles.statValue}>{item.coat_length}</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Lifespan</Text>
+              <Text style={styles.statValue}>{item.lifespan_min}-{item.lifespan_max}y</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statLabel}>Body</Text>
+              <Text style={styles.statValue}>{item.body_type}</Text>
             </View>
           </View>
 
-          {/* Temperament Tags */}
+          {/* Enhanced Temperament Preview */}
           <View style={styles.temperamentContainer}>
-            {item.temperament.split(',').slice(0, 3).map((temperament, index) => (
+            {item.temperament.split(',').slice(0, 2).map((temperament, index) => (
               <Badge
                 key={index}
                 text={temperament.trim()}
@@ -270,6 +282,11 @@ export default function BreedsScreen() {
                 style={styles.temperamentTag}
               />
             ))}
+            {item.temperament.split(',').length > 2 && (
+              <Text style={styles.moreTemperaments}>
+                +{item.temperament.split(',').length - 2} more
+              </Text>
+            )}
           </View>
         </View>
       </Card>
@@ -277,10 +294,9 @@ export default function BreedsScreen() {
   }, [handleBreedPress, handleFavoritePress, isFavorite]);
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Text style={styles.emptyStateIcon}>🐱</Text>
+    <View style={styles.emptyStateContainer}>
       <Text style={styles.emptyStateTitle}>
-        {searchQuery ? 'No breeds found' : 'No breeds available'}
+        {searchQuery ? 'No breeds match your search' : 'No breeds found'}
       </Text>
       <Text style={styles.emptyStateText}>
         {searchQuery 
@@ -304,7 +320,7 @@ export default function BreedsScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading breeds...</Text>
+        <Text style={styles.loadingText}>Loading cat breeds...</Text>
       </View>
     );
   }
@@ -359,13 +375,20 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   
+  list: {
+    flex: 1,
+  },
+  listContainer: {
+    flexGrow: 1,
+  },
+  
   // Loading States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: '8%',
   },
   loadingText: {
     marginTop: Spacing.lg,
@@ -380,7 +403,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: '8%',
   },
   errorTitle: {
     fontSize: Typography.fontSize.xl,
@@ -394,29 +417,21 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: Spacing.xl,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize.base * 1.5,
   },
   
-  // List
-  list: {
-    flex: 1,
-  },
-  listContainer: {
-    flexGrow: 1,
-  },
-  
-  // Header
+  // Header Section
   headerSection: {
-    backgroundColor: Colors.background,
-    paddingHorizontal: Spacing.lg,
+    paddingHorizontal: '5%',
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: '6%',
+    backgroundColor: Colors.background,
   },
   headerTitleContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   screenTitle: {
-    fontSize: Typography.fontSize.xxl,
+    fontSize: Typography.fontSize.xxxl,
     fontWeight: Typography.fontWeight.black,
     color: Colors.text,
     marginBottom: Spacing.xs,
@@ -431,7 +446,7 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginTop: Spacing.md,
+    marginTop: Spacing.lg,
   },
   filterButton: {
     flex: 1,
@@ -444,6 +459,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    ...Shadows.sm,
   },
   filterButtonText: {
     fontSize: Typography.fontSize.sm,
@@ -453,6 +469,7 @@ const styles = StyleSheet.create({
   },
   filterIcon: {
     fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
   },
   sortButton: {
     flex: 1,
@@ -465,6 +482,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
+    ...Shadows.sm,
   },
   sortButtonText: {
     fontSize: Typography.fontSize.sm,
@@ -474,32 +492,61 @@ const styles = StyleSheet.create({
   },
   sortIcon: {
     fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
   },
   
-  // Breed Cards
+  // Enhanced Breed Cards
   breedCard: {
-    marginHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
-    borderRadius: BorderRadius.xl,
+    width: '90%',
+    alignSelf: 'center',
+    marginBottom: '6%',
+    borderRadius: BorderRadius.xxl,
     overflow: 'hidden',
+    backgroundColor: Colors.surface,
   },
+  
+  // Enhanced Image Container
   breedImageContainer: {
     position: 'relative',
-    height: 200,
+    height: screenHeight * 0.28, // 28% of screen height
   },
   breedImage: {
     width: '100%',
     height: '100%',
     backgroundColor: Colors.surfaceVariant,
   },
-  favoriteButton: {
+  imageOverlay: {
     position: 'absolute',
-    top: Spacing.md,
-    right: Spacing.md,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '25%', // 25% of image height
   },
   
+  // Enhanced Favorite Button
+  favoriteButton: {
+    position: 'absolute',
+    top: '8%',
+    right: '6%',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: BorderRadius.full,
+    padding: Spacing.xs,
+    ...Shadows.md,
+  },
+  
+  // TICA Badge on Image
+  ticaBadgeContainer: {
+    position: 'absolute',
+    top: '8%',
+    left: '6%',
+  },
+  ticaBadge: {
+    backgroundColor: Colors.primary,
+  },
+  
+  // Enhanced Content
   breedContent: {
-    padding: Spacing.lg,
+    padding: '5%',
   },
   breedHeader: {
     flexDirection: 'row',
@@ -509,85 +556,92 @@ const styles = StyleSheet.create({
   },
   breedName: {
     flex: 1,
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
+    fontSize: Typography.fontSize.xl,
+    fontWeight: Typography.fontWeight.black,
     color: Colors.text,
-  },
-  ticaBadge: {
-    marginLeft: Spacing.sm,
   },
   breedOrigin: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.semibold,
-    marginBottom: Spacing.md,
+    fontWeight: Typography.fontWeight.medium,
+    marginBottom: Spacing.lg,
   },
   
+  // Enhanced Stats
   breedStats: {
-    marginBottom: Spacing.md,
-  },
-  statRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceVariant,
+    borderRadius: BorderRadius.lg,
+    padding: '4%',
+    marginBottom: '5%',
   },
   statItem: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: Colors.surfaceVariant,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.xs,
-    borderRadius: BorderRadius.md,
-    marginHorizontal: Spacing.xs,
   },
   statLabel: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
-    marginBottom: 2,
+    marginBottom: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   statValue: {
     fontSize: Typography.fontSize.sm,
     color: Colors.text,
     fontWeight: Typography.fontWeight.bold,
+    textAlign: 'center',
   },
-  
+  statDivider: {
+    width: 1,
+    height: '80%',
+    backgroundColor: Colors.border,
+    marginHorizontal: '3%',
+  },
+
+  // Enhanced Temperament
   temperamentContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     flexWrap: 'wrap',
-    gap: Spacing.xs,
+    gap: Spacing.sm,
   },
   temperamentTag: {
     marginRight: 0,
     marginBottom: 0,
   },
+  moreTemperaments: {
+    fontSize: Typography.fontSize.xs,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+    fontStyle: 'italic',
+  },
   
   // Empty State
-  emptyState: {
+  emptyStateContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.xxxl,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: Spacing.lg,
+    paddingHorizontal: '8%',
+    paddingVertical: '15%',
   },
   emptyStateTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.sm,
+    marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   emptyStateText: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: Spacing.lg,
-    lineHeight: Typography.fontSize.base * 1.4,
+    marginBottom: Spacing.xl,
+    lineHeight: Typography.fontSize.base * 1.5,
   },
   refreshButton: {
-    paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.xl,
+    marginTop: Spacing.lg,
   },
 });

@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
-import { View, Text, StyleSheet, Platform, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Platform, Dimensions, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import HomeScreen from '../screens/HomeScreen';
@@ -24,36 +24,86 @@ interface TabIconProps {
   focused: boolean;
 }
 
-const TabIcon: React.FC<TabIconProps> = ({ icon, label, focused }) => (
-  <View style={styles.tabIconContainer}>
-    <View style={[styles.iconWrapper, focused && styles.iconWrapperFocused]}>
-      {focused && (
-        <LinearGradient
-          colors={[Colors.primary, Colors.primaryDark]}
-          style={styles.iconGradient}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-        />
-      )}
-      <Text style={[styles.iconText, focused && styles.iconTextFocused]}>
-        {icon}
-      </Text>
-      {focused && <View style={styles.focusIndicator} />}
+const TabIcon: React.FC<TabIconProps> = ({ icon, label, focused }) => {
+  const scaleAnim = useRef(new Animated.Value(focused ? 1 : 0.9)).current;
+  const fadeAnim = useRef(new Animated.Value(focused ? 1 : 0.7)).current;
+  const slideAnim = useRef(new Animated.Value(focused ? 0 : 2)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: focused ? 1 : 0.9,
+        tension: 300,
+        friction: 10,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: focused ? 1 : 0.7,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: focused ? 0 : 2,
+        tension: 200,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [focused]);
+
+  return (
+    <View style={styles.tabIconContainer}>
+      <Animated.View 
+        style={[
+          styles.iconWrapper, 
+          focused && styles.iconWrapperFocused,
+          {
+            transform: [{ scale: scaleAnim }]
+          }
+        ]}
+      >
+        {focused && (
+          <LinearGradient
+            colors={[Colors.primary, Colors.primaryDark]}
+            style={styles.iconGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          />
+        )}
+        <Animated.Text 
+          style={[
+            styles.iconText, 
+            focused && styles.iconTextFocused,
+            {
+              opacity: fadeAnim,
+            }
+          ]}
+        >
+          {icon}
+        </Animated.Text>
+        
+        {focused && (
+          <Animated.View 
+            style={[
+              styles.focusIndicator,
+              {
+                transform: [{ translateY: slideAnim }]
+              }
+            ]} 
+          />
+        )}
+      </Animated.View>
     </View>
-    <Text 
-      style={[styles.tabLabel, focused && styles.tabLabelFocused]} 
-      numberOfLines={1}
-    >
-      {label}
-    </Text>
-  </View>
-);
+  );
+};
 
 function BreedsStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, 
+        headerShown: false,
+        gestureEnabled: true,
+        gestureDirection: 'horizontal',
       }}
     >
       <Stack.Screen 
@@ -63,6 +113,10 @@ function BreedsStack() {
       <Stack.Screen 
         name="BreedDetail" 
         component={BreedDetailScreen}
+        options={{
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
       />
     </Stack.Navigator>
   );
@@ -84,6 +138,10 @@ function QuizStack() {
       <Stack.Screen 
         name="QuizResults" 
         component={QuizResultsScreen}
+        options={{
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
+        }}
       />
     </Stack.Navigator>
   );
@@ -92,7 +150,7 @@ function QuizStack() {
 function AppTabNavigator() {
   const insets = useSafeAreaInsets();
   
-  const tabBarHeight = Platform.OS === 'ios' ? 85 : 70;
+  const tabBarHeight = Platform.OS === 'ios' ? 75 : 65;
   
   return (
     <Tab.Navigator
@@ -101,13 +159,13 @@ function AppTabNavigator() {
         tabBarStyle: {
           ...styles.tabBar,
           height: tabBarHeight + insets.bottom,
-          paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 5 : 10),
-          paddingTop: Platform.OS === 'ios' ? 10 : 8,
+          paddingBottom: insets.bottom + (Platform.OS === 'ios' ? 8 : 12),
+          paddingTop: Platform.OS === 'ios' ? 12 : 10,
         },
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarHideOnKeyboard: true, 
+        tabBarHideOnKeyboard: true,
       }}
     >
       <Tab.Screen
@@ -115,7 +173,7 @@ function AppTabNavigator() {
         component={HomeScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="🏠" label="Home" focused={focused} />
+            <TabIcon icon="Home" label="Home" focused={focused} />
           ),
         }}
       />
@@ -124,7 +182,7 @@ function AppTabNavigator() {
         component={BreedsStack}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="🐱" label="Breeds" focused={focused} />
+            <TabIcon icon="Cats" label="Breeds" focused={focused} />
           ),
         }}
       />
@@ -133,7 +191,7 @@ function AppTabNavigator() {
         component={QuizStack}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="🧠" label="Quiz" focused={focused} />
+            <TabIcon icon="Quiz" label="Quiz" focused={focused} />
           ),
         }}
       />
@@ -142,7 +200,7 @@ function AppTabNavigator() {
         component={FavoritesScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon icon="❤️" label="Favorites" focused={focused} />
+            <TabIcon icon="♥" label="Favorites" focused={focused} />
           ),
         }}
       />
@@ -161,38 +219,42 @@ export default function AppNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: Colors.surface,
-    borderTopWidth: 0, 
+    borderTopWidth: 0,
     ...Shadows.xl,
-    elevation: 20,
-    borderTopLeftRadius: BorderRadius.xxl,
-    borderTopRightRadius: BorderRadius.xxl,
+    elevation: 24,
+    borderTopLeftRadius: BorderRadius.xxxl,
+    borderTopRightRadius: BorderRadius.xxxl,
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
+    // Add subtle border for definition
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    borderBottomWidth: 0,
   },
   
   tabIconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.xs,
-    minHeight: 60,
+    paddingVertical: Spacing.sm,
+    minHeight: 55,
     flex: 1,
   },
   
   iconWrapper: {
-    width: 50,
-    height: 50,
-    borderRadius: BorderRadius.xxl,
+    width: 54,
+    height: 54,
+    borderRadius: BorderRadius.xxxl,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: Spacing.sm,
     position: 'relative',
     overflow: 'hidden',
   },
   iconWrapperFocused: {
     ...Shadows.lg,
-    transform: [{ scale: 1.1 }],
+    elevation: 8,
   },
   
   iconGradient: {
@@ -201,24 +263,27 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    borderRadius: BorderRadius.xxl,
+    borderRadius: BorderRadius.xxxl,
   },
   
   iconText: {
-    fontSize: 22,
+    fontSize: 16,
+    fontWeight: Typography.fontWeight.bold,
     textAlign: 'center',
     zIndex: 1,
+    color: Colors.textSecondary,
   },
   iconTextFocused: {
-    fontSize: 24,
+    fontSize: 16,
+    color: Colors.textInverse,
   },
   
   focusIndicator: {
     position: 'absolute',
-    bottom: -8,
-    width: 24,
+    bottom: -10,
+    width: 28,
     height: 4,
-    backgroundColor: Colors.primary,
+                backgroundColor: Colors.primary,
     borderRadius: BorderRadius.full,
     ...Shadows.md,
   },
