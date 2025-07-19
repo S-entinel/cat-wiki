@@ -4,14 +4,11 @@ import {
   Text, 
   View, 
   ScrollView, 
-  Image, 
   TouchableOpacity, 
   ActivityIndicator,
   Dimensions,
   StatusBar,
   Platform,
-  ImageErrorEventData,
-  NativeSyntheticEvent
 } from 'react-native';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,21 +16,16 @@ import { useDatabase } from '../context/DatabaseContext';
 import { CatBreed } from '../types/CatBreed';
 import { RootStackParamList } from '../types/navigation';
 import { AnimatedHeart } from '../components/AnimatedHeart';
-import { Card } from '../components/common/Card';
 import { Badge } from '../components/common/Badge';
-import { Button } from '../components/common/Button';
-import { catImages } from '../assets/catPhotos/imageMap';
 import { 
   Colors, 
   Typography, 
   Spacing, 
   BorderRadius, 
-  Shadows, 
-  Layout
+  Shadows
 } from '../constants/theme';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const IMAGE_HEIGHT = screenHeight * 0.45; 
 
 type BreedDetailRouteProp = RouteProp<RootStackParamList, 'BreedDetail'>;
 
@@ -46,8 +38,6 @@ export default function BreedDetailScreen({ route }: Props) {
   const { toggleFavorite, isFavorite, getBreedById } = useDatabase();
   const [breed, setBreed] = useState<CatBreed>(route.params.breed);
   const [isLoading, setIsLoading] = useState(false);
-  const [imageError, setImageError] = useState(false);
-
 
   useEffect(() => {
     if (route.params.breedId && route.params.breedId !== breed.id) {
@@ -60,9 +50,9 @@ export default function BreedDetailScreen({ route }: Props) {
     
     setIsLoading(true);
     try {
-      const breedDetails = await getBreedById(route.params.breedId);
-      if (breedDetails) {
-        setBreed(breedDetails);
+      const breedData = await getBreedById(route.params.breedId);
+      if (breedData) {
+        setBreed(breedData);
       }
     } catch (error) {
       console.error('Error fetching breed details:', error);
@@ -71,61 +61,26 @@ export default function BreedDetailScreen({ route }: Props) {
     }
   };
 
-  const handleBackPress = useCallback(() => {
+  const handleBackPress = () => {
     navigation.goBack();
-  }, [navigation]);
+  };
 
   const handleFavoritePress = useCallback(async () => {
-    if (breed.id) {
-      await toggleFavorite(breed.id);
+    try {
+      await toggleFavorite(breed.id!);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
     }
   }, [breed.id, toggleFavorite]);
 
-  const handleImageError = (error: NativeSyntheticEvent<ImageErrorEventData>) => {
-    console.log('Image loading error:', error.nativeEvent.error);
-    setImageError(true);
-  };
-
-  const renderTemperamentTags = () => {
-    if (!breed.temperament) return null;
-    
+  const renderTemperamentList = () => {
     const temperaments = breed.temperament.split(',').map(t => t.trim());
     
-    return (
-      <View style={styles.temperamentContainer}>
-        {temperaments.map((temperament, index) => (
-          <Badge
-            key={index}
-            text={temperament}
-            variant="secondary"
-            size="sm"
-            outlined
-            style={styles.temperamentTag}
-          />
-        ))}
-      </View>
-    );
-  };
-
-  const getImageSource = () => {
-    // If there's an error, show placeholder
-    if (imageError) {
-      return catImages['placeholder.jpg'];
-    }
-    
-    // Try breed.image_path first (should be the filename like 'abyssinian.jpg')
-    if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
-      return catImages[breed.image_path as keyof typeof catImages];
-    }
-    
-    // Try name-based key as fallback (convert "Abyssinian" -> "abyssinian.jpg")
-    const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
-    if (catImages[nameBasedKey as keyof typeof catImages]) {
-      return catImages[nameBasedKey as keyof typeof catImages];
-    }
-    
-    // Ultimate fallback to placeholder
-    return catImages['placeholder.jpg'];
+    return temperaments.map((temperament, index) => (
+      <Text key={index} style={styles.temperamentItem}>
+        {temperament}{index < temperaments.length - 1 ? ' • ' : ''}
+      </Text>
+    ));
   };
 
   if (isLoading) {
@@ -139,207 +94,141 @@ export default function BreedDetailScreen({ route }: Props) {
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-      <View style={styles.container}>
-        {/* Hero Image Section */}
-        <View style={styles.imageContainer}>
-          <Image 
-            source={getImageSource()}
-            style={styles.heroImage}
-            resizeMode="cover"
-            onError={handleImageError}
-          />
+      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      
+      {/* Clean Header */}
+      <LinearGradient
+        colors={[Colors.background, Colors.surfaceVariant]}
+        style={styles.header}
+      >
+        <View style={styles.headerContent}>
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={handleBackPress}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
           
-          {/* Enhanced Gradient Overlay */}
-          <LinearGradient
-            colors={[
-              'rgba(0,0,0,0)', 
-              'rgba(0,0,0,0.1)', 
-              'rgba(0,0,0,0.4)', 
-              'rgba(0,0,0,0.8)'
-            ]}
-            style={styles.imageOverlay}
-            locations={[0, 0.3, 0.7, 1]}
-          />
-          
-          {/* Navigation Header */}
-          <View style={styles.navigationHeader}>
-            <TouchableOpacity 
-              style={styles.backButton}
-              onPress={handleBackPress}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.backIcon}>←</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.favoriteButtonHeader}
-              onPress={handleFavoritePress}
-              activeOpacity={0.8}
-            >
-              <AnimatedHeart
-                isFavorite={isFavorite(breed.id!)}
-                onPress={handleFavoritePress}
-                size="lg"
-                showBackground
-              />
-            </TouchableOpacity>
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{breed.name}</Text>
+            <Text style={styles.headerSubtitle}>Cat Breed Encyclopedia</Text>
           </View>
           
-          {/* Breed Title Overlay */}
-          <View style={styles.heroContent}>
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={handleFavoritePress}
+            activeOpacity={0.7}
+          >
+            <AnimatedHeart
+              isFavorite={isFavorite(breed.id!)}
+              onPress={handleFavoritePress}
+              size="md"
+              showBackground={false}
+            />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      <ScrollView 
+        style={styles.container} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        {/* Breed Header */}
+        <View style={styles.breedHeader}>
+          <View style={styles.titleRow}>
+            <View style={styles.titleContent}>
+              <Text style={styles.breedName}>{breed.name}</Text>
+              <Text style={styles.breedOrigin}>Origin: {breed.origin}</Text>
+            </View>
             <Badge 
               text={breed.tica_code} 
               variant="primary" 
               size="sm"
-              style={styles.ticaBadge}
             />
-            <Text style={styles.heroTitle}>{breed.name}</Text>
-            <View style={styles.heroOrigin}>
-              <Text style={styles.originIcon}>📍</Text>
-              <Text style={styles.originText}>{breed.origin}</Text>
-            </View>
           </View>
         </View>
 
-        {/* Scrollable Content */}
-        <ScrollView
-          style={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-        >
-          {/* Quick Info Cards */}
-          <View style={styles.quickInfoSection}>
-            <View style={styles.quickInfoRow}>
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
-                <Text style={styles.quickInfoIcon}>🧬</Text>
-                <Text style={styles.quickInfoLabel}>Coat</Text>
-                <Text style={styles.quickInfoValue}>{breed.coat_length}</Text>
-              </Card>
-              
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
-                <Text style={styles.quickInfoIcon}>🏗️</Text>
-                <Text style={styles.quickInfoLabel}>Body Type</Text>
-                <Text style={styles.quickInfoValue}>{breed.body_type}</Text>
-              </Card>
-              
-              <Card style={styles.quickInfoCard} variant="elevated" shadow="md">
-                <Text style={styles.quickInfoIcon}>🎨</Text>
-                <Text style={styles.quickInfoLabel}>Pattern</Text>
-                <Text style={styles.quickInfoValue}>{breed.coat_pattern}</Text>
-              </Card>
+        {/* Quick Facts */}
+        <View style={styles.quickFacts}>
+          <Text style={styles.sectionTitle}>Quick Facts</Text>
+          <View style={styles.factsList}>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Coat Length:</Text>
+              <Text style={styles.factValue}>{breed.coat_length}</Text>
             </View>
-          </View>
-
-          {/* Physical Characteristics */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Physical Characteristics</Text>
-            
-            <View style={styles.statsContainer}>
-              <View style={styles.statsRow}>
-                <Card style={styles.statCard} variant="elevated" shadow="sm">
-                  <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>⏱️</Text>
-                    <Text style={styles.statLabel}>Lifespan</Text>
-                  </View>
-                  <Text style={styles.statValue}>
-                    {breed.lifespan_min}-{breed.lifespan_max} years
-                  </Text>
-                </Card>
-                
-                <Card style={styles.statCard} variant="elevated" shadow="sm">
-                  <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>⚖️</Text>
-                    <Text style={styles.statLabel}>Weight</Text>
-                  </View>
-                  <Text style={styles.statValue}>
-                    {breed.weight_min_female}-{breed.weight_max_male} kg
-                  </Text>
-                </Card>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Body Type:</Text>
+              <Text style={styles.factValue}>{breed.body_type}</Text>
+            </View>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Activity Level:</Text>
+              <Text style={styles.factValue}>{breed.activity_level}</Text>
+            </View>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Lifespan:</Text>
+              <Text style={styles.factValue}>{breed.lifespan_min}-{breed.lifespan_max} years</Text>
+            </View>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Weight Range:</Text>
+              <Text style={styles.factValue}>{breed.weight_min_female}-{breed.weight_max_male} kg</Text>
+            </View>
+            <View style={styles.factRow}>
+              <Text style={styles.factLabel}>Grooming Needs:</Text>
+              <Text style={styles.factValue}>{breed.grooming_needs}</Text>
+            </View>
+            {breed.coat_pattern && (
+              <View style={styles.factRow}>
+                <Text style={styles.factLabel}>Coat Pattern:</Text>
+                <Text style={styles.factValue}>{breed.coat_pattern}</Text>
               </View>
-              
-              <View style={styles.statsRow}>
-                <Card style={styles.statCard} variant="elevated" shadow="sm">
-                  <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>🏃</Text>
-                    <Text style={styles.statLabel}>Activity</Text>
-                  </View>
-                  <Text style={styles.activityText}>{breed.activity_level}</Text>
-                </Card>
-                
-                <Card style={styles.statCard} variant="elevated" shadow="sm">
-                  <View style={styles.statHeader}>
-                    <Text style={styles.statIcon}>✂️</Text>
-                    <Text style={styles.statLabel}>Grooming</Text>
-                  </View>
-                  <Text style={styles.groomingText}>{breed.grooming_needs}</Text>
-                </Card>
-              </View>
-            </View>
+            )}
           </View>
+        </View>
 
-          {/* Temperament Section */}
+        {/* About Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About the {breed.name}</Text>
+          <Text style={styles.description}>{breed.description}</Text>
+        </View>
+
+        {/* Temperament */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Temperament</Text>
+          <View style={styles.temperamentContainer}>
+            {renderTemperamentList()}
+          </View>
+        </View>
+
+        {/* Care Requirements */}
+        {breed.care_requirements && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Temperament</Text>
-            <Card style={styles.temperamentCard} variant="elevated" shadow="md">
-              {renderTemperamentTags()}
-            </Card>
+            <Text style={styles.sectionTitle}>Care Requirements</Text>
+            <Text style={styles.bodyText}>{breed.care_requirements}</Text>
           </View>
+        )}
 
-          {/* Description Section */}
+        {/* Ideal For */}
+        {breed.ideal_for && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About This Breed</Text>
-            <Card style={styles.descriptionCard} variant="elevated" shadow="md">
-              <Text style={styles.description}>{breed.description}</Text>
-            </Card>
+            <Text style={styles.sectionTitle}>Ideal For</Text>
+            <Text style={styles.bodyText}>{breed.ideal_for}</Text>
           </View>
+        )}
 
-          {/* Care Requirements */}
-          {breed.care_requirements && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Care Requirements</Text>
-              <Card style={styles.infoCard} variant="filled">
-                <View style={styles.infoHeader}>
-                  <Text style={styles.infoIcon}>🎯</Text>
-                  <Text style={styles.infoTitle}>What They Need</Text>
-                </View>
-                <Text style={styles.infoText}>{breed.care_requirements}</Text>
-              </Card>
+        {/* Health Considerations */}
+        {breed.health_issues && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Health Considerations</Text>
+            <View style={styles.healthNote}>
+              <Text style={styles.healthText}>{breed.health_issues}</Text>
             </View>
-          )}
+          </View>
+        )}
 
-          {/* Ideal For */}
-          {breed.ideal_for && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Perfect For</Text>
-              <Card style={styles.infoCard} variant="filled">
-                <View style={styles.infoHeader}>
-                  <Text style={styles.infoIcon}>👥</Text>
-                  <Text style={styles.infoTitle}>Ideal Households</Text>
-                </View>
-                <Text style={styles.infoText}>{breed.ideal_for}</Text>
-              </Card>
-            </View>
-          )}
-
-          {/* Health Information */}
-          {breed.health_issues && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Health Considerations</Text>
-              <Card style={styles.healthCard} variant="outlined">
-                <View style={styles.infoHeader}>
-                  <Text style={styles.infoIcon}>🏥</Text>
-                  <Text style={styles.healthTitle}>Health Notes</Text>
-                </View>
-                <Text style={styles.healthText}>{breed.health_issues}</Text>
-              </Card>
-            </View>
-          )}
-
-          {/* Bottom Spacing */}
-          <View style={styles.bottomSpacing} />
-        </ScrollView>
-      </View>
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
     </>
   );
 }
@@ -356,7 +245,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: Layout.content.paddingHorizontal,
+    paddingHorizontal: '8%',
   },
   loadingText: {
     marginTop: Spacing.lg,
@@ -365,263 +254,174 @@ const styles = StyleSheet.create({
     fontWeight: Typography.fontWeight.medium,
   },
   
-  // Hero Image Section
-  imageContainer: {
-    position: 'relative',
-    height: IMAGE_HEIGHT,
-    backgroundColor: Colors.surfaceVariant, 
+  // Clean Header
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
   },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: Colors.surfaceVariant,
-  },
-  imageOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '80%', 
-  },
-  
-  // Navigation
-  navigationHeader: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
-    left: 0,
-    right: 0,
+  headerContent: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    zIndex: 10,
+    paddingHorizontal: '5%',
   },
   backButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: BorderRadius.full,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.md,
+    ...Shadows.sm,
   },
   backIcon: {
-    fontSize: Typography.fontSize.xxl,
-    color: Colors.textInverse,
+    fontSize: Typography.fontSize.xl,
+    color: Colors.text,
     fontWeight: Typography.fontWeight.bold,
-    marginLeft: -2, 
+    marginLeft: -2,
   },
-  favoriteButtonHeader: {
-  },
-  
-  // Hero Content
-  heroContent: {
-    position: 'absolute',
-    bottom: Spacing.xl,
-    left: Layout.content.paddingHorizontal,
-    right: Layout.content.paddingHorizontal,
-  },
-  ticaBadge: {
-    alignSelf: 'flex-start',
-    marginBottom: Spacing.md,
-  },
-  heroTitle: {
-    fontSize: Typography.fontSize.xxxxl,
-    fontWeight: Typography.fontWeight.black,
-    color: Colors.textInverse,
-    marginBottom: Spacing.sm,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  heroOrigin: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  originIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginRight: Spacing.xs,
-  },
-  originText: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.textInverse,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  
-  // Content Container
-  contentContainer: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    marginTop: -Spacing.xl,
-    borderTopLeftRadius: BorderRadius.xxl,
-    borderTopRightRadius: BorderRadius.xxl,
-  },
-  
-  // Quick Info Section
-  quickInfoSection: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    paddingTop: Spacing.xxxl,
-    paddingBottom: Spacing.xl,
-  },
-  quickInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  quickInfoCard: {
+  headerCenter: {
     flex: 1,
     alignItems: 'center',
-    padding: Spacing.lg,
-    minHeight: 100,
-    borderRadius: BorderRadius.lg,
   },
-  quickInfoIcon: {
-    fontSize: Typography.fontSize.xxl,
-    marginBottom: Spacing.sm,
+  headerTitle: {
+    fontSize: Typography.fontSize.lg,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
   },
-  quickInfoLabel: {
-    fontSize: Typography.fontSize.xs,
+  headerSubtitle: {
+    fontSize: Typography.fontSize.sm,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
-    marginBottom: Spacing.xs,
-    textAlign: 'center',
   },
-  quickInfoValue: {
-    fontSize: Typography.fontSize.sm,
+  favoriteButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  
+  // Content
+  content: {
+    paddingHorizontal: '5%',
+    paddingVertical: '4%',
+  },
+  
+  // Breed Header
+  breedHeader: {
+    marginBottom: '8%',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  titleContent: {
+    flex: 1,
+    marginRight: Spacing.lg,
+  },
+  breedName: {
+    fontSize: Typography.fontSize.xxxl,
+    fontWeight: Typography.fontWeight.black,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  breedOrigin: {
+    fontSize: Typography.fontSize.lg,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  
+  // Quick Facts
+  quickFacts: {
+    marginBottom: '8%',
+    backgroundColor: Colors.surfaceVariant,
+    borderRadius: BorderRadius.lg,
+    padding: '5%',
+  },
+  factsList: {
+    gap: Spacing.md,
+  },
+  factRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  factLabel: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+    flex: 1,
+  },
+  factValue: {
+    fontSize: Typography.fontSize.base,
     color: Colors.text,
     fontWeight: Typography.fontWeight.semibold,
-    textAlign: 'center',
+    textAlign: 'right',
+    flex: 1,
   },
   
   // Sections
   section: {
-    paddingHorizontal: Layout.content.paddingHorizontal,
-    marginBottom: Spacing.xxxl,
+    marginBottom: '8%',
   },
   sectionTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
     marginBottom: Spacing.lg,
-  },
-  
-  // Physical Stats
-  statsContainer: {
-    gap: Spacing.md,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-  },
-  statCard: {
-    flex: 1,
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.sm,
-  },
-  statIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginRight: Spacing.xs,
-  },
-  statLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    flex: 1,
-  },
-  statValue: {
-    fontSize: Typography.fontSize.base,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.semibold,
-  },
-  activityText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  groomingText: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  
-  // Temperament
-  temperamentCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
-  temperamentContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  temperamentTag: {
-    marginBottom: Spacing.xs,
+    borderBottomWidth: 2,
+    borderBottomColor: Colors.primary,
+    paddingBottom: Spacing.sm,
   },
   
   // Description
-  descriptionCard: {
-    padding: Spacing.lg,
-    borderRadius: BorderRadius.lg,
-  },
   description: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize.base * 1.7,
     color: Colors.text,
+    fontWeight: Typography.fontWeight.normal,
   },
   
-  // Info Cards
-  infoCard: {
-    padding: Spacing.lg,
-    backgroundColor: Colors.primarySoft,
-    borderRadius: BorderRadius.lg,
-  },
-  infoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: Spacing.md,
-  },
-  infoIcon: {
-    fontSize: Typography.fontSize.lg,
-    marginRight: Spacing.sm,
-  },
-  infoTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
-  },
-  infoText: {
+  // Body Text
+  bodyText: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize.base * 1.7,
     color: Colors.text,
+    fontWeight: Typography.fontWeight.normal,
   },
   
-  // Health Card
-  healthCard: {
-    padding: Spacing.lg,
-    backgroundColor: Colors.warningSoft,
-    borderColor: Colors.warning,
-    borderRadius: BorderRadius.lg,
+  // Temperament
+  temperamentContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
   },
-  healthTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.warning,
+  temperamentItem: {
+    fontSize: Typography.fontSize.base,
+    color: Colors.text,
+    fontWeight: Typography.fontWeight.medium,
+    lineHeight: Typography.fontSize.base * 1.5,
+  },
+  
+  // Health Note
+  healthNote: {
+    backgroundColor: Colors.warningSoft,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.warning,
+    borderRadius: BorderRadius.sm,
+    padding: Spacing.lg,
   },
   healthText: {
     fontSize: Typography.fontSize.base,
-    lineHeight: Typography.fontSize.base * Typography.lineHeight.relaxed,
+    lineHeight: Typography.fontSize.base * 1.7,
     color: Colors.text,
+    fontWeight: Typography.fontWeight.normal,
+    fontStyle: 'italic',
   },
   
   bottomSpacing: {
-    height: Layout.tabBar.heightSafe + Spacing.lg,
+    height: screenHeight * 0.08,
   },
 });
