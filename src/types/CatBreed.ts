@@ -1,9 +1,18 @@
 import { catImages } from '../assets/catPhotos/imageMap';
 
+// Personality scores interface for the new data structure
+export interface PersonalityScores {
+  energy_level: number;      // 1-10 scale
+  friendliness: number;      // 1-10 scale  
+  intelligence: number;      // 1-10 scale
+  independence: number;      // 1-10 scale
+  playfulness: number;       // 1-10 scale
+  vocality: number;         // 1-10 scale
+}
 
 export interface CatBreed {
   id?: number;
-  tica_code: string;  // TICA breed code (e.g., "PER" for Persian)
+  tica_code?: string;  // Made optional since new data doesn't include it
   name: string;
   origin: string;
   coat_length: CoatLength;
@@ -22,6 +31,8 @@ export interface CatBreed {
   description: string;
   care_requirements?: string;
   ideal_for?: string;
+  genetic_info?: string;      // New field for genetic information
+  personality_scores?: PersonalityScores;  // New field for personality data
   image_path: string;
   created_at?: string;
   updated_at?: string;

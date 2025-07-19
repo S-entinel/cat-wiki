@@ -68,7 +68,9 @@ export default function BreedsScreen() {
         breed.name.toLowerCase().includes(query) ||
         breed.origin.toLowerCase().includes(query) ||
         breed.temperament.toLowerCase().includes(query) ||
-        breed.activity_level.toLowerCase().includes(query)
+        breed.activity_level.toLowerCase().includes(query) ||
+        breed.coat_pattern?.toLowerCase().includes(query) ||
+        breed.genetic_info?.toLowerCase().includes(query)
       );
     }
 
@@ -220,88 +222,95 @@ export default function BreedsScreen() {
               isFavorite={isFavorite(item.id!)}
               onPress={() => handleFavoritePress(item.id!)}
               size="md"
-              showBackground
+              showBackground={true}
             />
           </View>
           
-          {/* TICA Code Badge on Image */}
-          <View style={styles.ticaBadgeContainer}>
-            <Badge 
-              text={item.tica_code} 
-              variant="primary" 
-              size="xs" 
-              style={styles.ticaBadge} 
-            />
-          </View>
+          {/* TICA Badge - only show if available */}
+          {item.tica_code && (
+            <View style={styles.ticaBadgeContainer}>
+              <Badge 
+                text={item.tica_code} 
+                variant="primary" 
+                size="xs"
+                style={styles.ticaBadge}
+              />
+            </View>
+          )}
         </View>
-        
-        {/* Enhanced Content Section */}
+
+        {/* Enhanced Content */}
         <View style={styles.breedContent}>
           <View style={styles.breedHeader}>
             <Text style={styles.breedName} numberOfLines={1}>
               {item.name}
             </Text>
-            <Badge
-              text={item.activity_level}
-              variant={getActivityVariant(item.activity_level)}
-              size="xs"
-            />
           </View>
           
           <Text style={styles.breedOrigin} numberOfLines={1}>
             {item.origin}
           </Text>
           
-          {/* Enhanced Stats Row */}
-          <View style={styles.breedStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Coat</Text>
-              <Text style={styles.statValue}>{item.coat_length}</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Lifespan</Text>
-              <Text style={styles.statValue}>{item.lifespan_min}-{item.lifespan_max}y</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statLabel}>Body</Text>
-              <Text style={styles.statValue}>{item.body_type}</Text>
-            </View>
-          </View>
-
-          {/* Enhanced Temperament Preview */}
-          <View style={styles.temperamentContainer}>
-            {item.temperament.split(',').slice(0, 2).map((temperament, index) => (
-              <Badge
-                key={index}
-                text={temperament.trim()}
-                variant="accent"
+          {/* Enhanced Badge Row */}
+          <View style={styles.badgeRow}>
+            <Badge 
+              text={item.activity_level} 
+              variant={getActivityVariant(item.activity_level)}
+              size="xs"
+            />
+            <Badge 
+              text={item.coat_length} 
+              variant="accent"
+              size="xs"
+            />
+            {item.coat_pattern && (
+              <Badge 
+                text={item.coat_pattern} 
+                variant="info"
                 size="xs"
-                outlined
-                style={styles.temperamentTag}
               />
-            ))}
-            {item.temperament.split(',').length > 2 && (
-              <Text style={styles.moreTemperaments}>
-                +{item.temperament.split(',').length - 2} more
-              </Text>
             )}
           </View>
+          
+          {/* Personality Score Preview - if available */}
+          {item.personality_scores && (
+            <View style={styles.personalityPreview}>
+              <Text style={styles.personalityLabel}>Personality Highlights:</Text>
+              <View style={styles.personalityScores}>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreLabel}>Energy</Text>
+                  <Text style={styles.scoreValue}>{item.personality_scores.energy_level}/10</Text>
+                </View>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreLabel}>Friendly</Text>
+                  <Text style={styles.scoreValue}>{item.personality_scores.friendliness}/10</Text>
+                </View>
+                <View style={styles.scoreItem}>
+                  <Text style={styles.scoreLabel}>Smart</Text>
+                  <Text style={styles.scoreValue}>{item.personality_scores.intelligence}/10</Text>
+                </View>
+              </View>
+            </View>
+          )}
+          
+          {/* Brief Description */}
+          <Text style={styles.breedDescription} numberOfLines={2}>
+            {item.description}
+          </Text>
         </View>
       </Card>
     );
-  }, [handleBreedPress, handleFavoritePress, isFavorite]);
+  }, [isFavorite, handleBreedPress, handleFavoritePress]);
 
   const renderEmptyState = () => (
-    <View style={styles.emptyStateContainer}>
-      <Text style={styles.emptyStateTitle}>
-        {searchQuery ? 'No breeds match your search' : 'No breeds found'}
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyTitle}>
+        {searchQuery ? 'No breeds match your search' : 'No breeds available'}
       </Text>
-      <Text style={styles.emptyStateText}>
+      <Text style={styles.emptyText}>
         {searchQuery 
-          ? 'Try adjusting your search terms or clearing filters' 
-          : 'Check your internet connection and try refreshing'
+          ? 'Try adjusting your search terms or browse all available breeds'
+          : 'Check your connection and try refreshing the list'
         }
       </Text>
       {!searchQuery && (
@@ -309,7 +318,7 @@ export default function BreedsScreen() {
           title="Refresh"
           onPress={handleRefresh}
           variant="primary"
-          size="md"
+          size="lg"
           style={styles.refreshButton}
         />
       )}
@@ -328,7 +337,7 @@ export default function BreedsScreen() {
   if (error && breeds.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+        <Text style={styles.errorTitle}>Unable to load breeds</Text>
         <Text style={styles.errorText}>{error}</Text>
         <Button
           title="Try Again"
@@ -347,7 +356,7 @@ export default function BreedsScreen() {
       <FlatList
         data={filteredBreeds}
         renderItem={renderBreed}
-        keyExtractor={(item) => item.id?.toString() || item.tica_code}
+        keyExtractor={(item) => item.id?.toString() || item.name}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmptyState}
         refreshControl={
@@ -378,8 +387,9 @@ const styles = StyleSheet.create({
   list: {
     flex: 1,
   },
+  
   listContainer: {
-    flexGrow: 1,
+    paddingHorizontal: Spacing.lg,
   },
   
   // Loading States
@@ -388,74 +398,71 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: '8%',
+    gap: Spacing.lg,
   },
   loadingText: {
-    marginTop: Spacing.lg,
-    fontSize: Typography.fontSize.base,
+    fontSize: Typography.fontSize.lg,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
   },
   
-  // Error States
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: '8%',
+    paddingHorizontal: Spacing.xl,
+    gap: Spacing.lg,
   },
   errorTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
-    marginBottom: Spacing.md,
+    color: Colors.error,
     textAlign: 'center',
   },
   errorText: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: Spacing.xl,
     lineHeight: Typography.fontSize.base * 1.5,
   },
   
   // Header Section
   headerSection: {
-    paddingHorizontal: '5%',
-    paddingTop: Spacing.lg,
-    paddingBottom: '6%',
-    backgroundColor: Colors.background,
+    paddingVertical: Spacing.xl,
+    gap: Spacing.lg,
   },
   headerTitleContainer: {
-    marginBottom: Spacing.xl,
+    alignItems: 'center',
+    marginBottom: Spacing.md,
   },
   screenTitle: {
-    fontSize: Typography.fontSize.xxxl,
+    fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
     color: Colors.text,
+    textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   screenSubtitle: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
+    textAlign: 'center',
   },
   
   // Controls
   controlsRow: {
     flexDirection: 'row',
     gap: Spacing.md,
-    marginTop: Spacing.lg,
   },
   filterButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surface,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceVariant,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -476,9 +483,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.surface,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.surfaceVariant,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -564,82 +571,76 @@ const styles = StyleSheet.create({
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   
-  // Enhanced Stats
-  breedStats: {
+  // Badge Row
+  badgeRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.surfaceVariant,
-    borderRadius: BorderRadius.lg,
-    padding: '4%',
-    marginBottom: '5%',
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  statLabel: {
-    fontSize: Typography.fontSize.xs,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-    marginBottom: Spacing.xs,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statValue: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.text,
-    fontWeight: Typography.fontWeight.bold,
-    textAlign: 'center',
-  },
-  statDivider: {
-    width: 1,
-    height: '80%',
-    backgroundColor: Colors.border,
-    marginHorizontal: '3%',
-  },
-
-  // Enhanced Temperament
-  temperamentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
     flexWrap: 'wrap',
     gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
-  temperamentTag: {
-    marginRight: 0,
-    marginBottom: 0,
+
+  // Personality Preview
+  personalityPreview: {
+    marginBottom: Spacing.md,
+    padding: Spacing.md,
+    backgroundColor: Colors.primarySoft,
+    borderRadius: BorderRadius.md,
   },
-  moreTemperaments: {
+  personalityLabel: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.primary,
+    marginBottom: Spacing.xs,
+  },
+  personalityScores: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  scoreItem: {
+    alignItems: 'center',
+  },
+  scoreLabel: {
     fontSize: Typography.fontSize.xs,
     color: Colors.textSecondary,
     fontWeight: Typography.fontWeight.medium,
-    fontStyle: 'italic',
+    marginBottom: 2,
+  },
+  scoreValue: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.primary,
+  },
+  
+  // Description
+  breedDescription: {
+    fontSize: Typography.fontSize.sm,
+    lineHeight: Typography.fontSize.sm * 1.5,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.normal,
   },
   
   // Empty State
-  emptyStateContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  emptyContainer: {
     alignItems: 'center',
-    paddingHorizontal: '8%',
     paddingVertical: '15%',
+    paddingHorizontal: Spacing.xl,
   },
-  emptyStateTitle: {
+  emptyTitle: {
     fontSize: Typography.fontSize.xl,
     fontWeight: Typography.fontWeight.bold,
     color: Colors.text,
-    marginBottom: Spacing.md,
     textAlign: 'center',
+    marginBottom: Spacing.md,
   },
-  emptyStateText: {
+  emptyText: {
     fontSize: Typography.fontSize.base,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: Spacing.xl,
     lineHeight: Typography.fontSize.base * 1.5,
+    marginBottom: Spacing.xl,
   },
   refreshButton: {
     marginTop: Spacing.lg,

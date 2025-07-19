@@ -9,6 +9,7 @@ import {
   Dimensions,
   StatusBar,
   Platform,
+  Image,
 } from 'react-native';
 import { RouteProp, useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,6 +18,7 @@ import { CatBreed } from '../types/CatBreed';
 import { RootStackParamList } from '../types/navigation';
 import { AnimatedHeart } from '../components/AnimatedHeart';
 import { Badge } from '../components/common/Badge';
+import { catImages } from '../assets/catPhotos/imageMap';
 import { 
   Colors, 
   Typography, 
@@ -73,62 +75,161 @@ export default function BreedDetailScreen({ route }: Props) {
     }
   }, [breed.id, toggleFavorite]);
 
+  const getImageSource = (breed: CatBreed) => {
+    if (breed.image_path && catImages[breed.image_path as keyof typeof catImages]) {
+      return catImages[breed.image_path as keyof typeof catImages];
+    }
+    const nameBasedKey = `${breed.name.toLowerCase().replace(/\s+/g, '-')}.jpg`;
+    if (catImages[nameBasedKey as keyof typeof catImages]) {
+      return catImages[nameBasedKey as keyof typeof catImages];
+    }
+    return catImages['placeholder.jpg'];
+  };
+
   const renderTemperamentList = () => {
     const temperaments = breed.temperament.split(',').map(t => t.trim());
     
     return temperaments.map((temperament, index) => (
       <Text key={index} style={styles.temperamentItem}>
-        {temperament}{index < temperaments.length - 1 ? ' • ' : ''}
+        {temperament}{index < temperaments.length - 1 ? ', ' : ''}
       </Text>
     ));
+  };
+
+  // Data visualization component for personality scores
+  const renderPersonalityChart = () => {
+    if (!breed.personality_scores) return null;
+
+    const scores = breed.personality_scores;
+    const maxScore = 10;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Personality Profile</Text>
+        <View style={styles.personalityContainer}>
+          {Object.entries(scores).map(([trait, score]) => {
+            const percentage = (score / maxScore) * 100;
+            const traitLabel = trait.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            return (
+              <View key={trait} style={styles.personalityRow}>
+                <View style={styles.personalityHeader}>
+                  <Text style={styles.personalityLabel}>{traitLabel}</Text>
+                  <Text style={styles.personalityScore}>{score}/10</Text>
+                </View>
+                <View style={styles.personalityBarContainer}>
+                  <View style={styles.personalityBarBackground}>
+                    <View 
+                      style={[
+                        styles.personalityBarFill, 
+                        { width: `${percentage}%` }
+                      ]} 
+                    />
+                  </View>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
+  // Weight comparison visualization
+  const renderWeightChart = () => {
+    const femaleMin = breed.weight_min_female;
+    const femaleMax = breed.weight_max_female;
+    const maleMin = breed.weight_min_male;
+    const maleMax = breed.weight_max_male;
+    
+    const maxWeight = Math.max(femaleMax, maleMax);
+    const femaleAvg = (femaleMin + femaleMax) / 2;
+    const maleAvg = (maleMin + maleMax) / 2;
+
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Weight Comparison</Text>
+        <View style={styles.weightContainer}>
+          <View style={styles.weightRow}>
+            <View style={styles.weightGenderContainer}>
+              <Text style={styles.weightGenderLabel}>♀ Female</Text>
+              <Text style={styles.weightRange}>{femaleMin} - {femaleMax} kg</Text>
+            </View>
+            <View style={styles.weightBarContainer}>
+              <View style={styles.weightBarBackground}>
+                <View 
+                  style={[
+                    styles.weightBarFill,
+                    styles.femaleWeightBar,
+                    { width: `${(femaleAvg / maxWeight) * 100}%` }
+                  ]} 
+                />
+              </View>
+            </View>
+          </View>
+          
+          <View style={styles.weightRow}>
+            <View style={styles.weightGenderContainer}>
+              <Text style={styles.weightGenderLabel}>♂ Male</Text>
+              <Text style={styles.weightRange}>{maleMin} - {maleMax} kg</Text>
+            </View>
+            <View style={styles.weightBarContainer}>
+              <View style={styles.weightBarBackground}>
+                <View 
+                  style={[
+                    styles.weightBarFill,
+                    styles.maleWeightBar,
+                    { width: `${(maleAvg / maxWeight) * 100}%` }
+                  ]} 
+                />
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading breed details...</Text>
       </View>
     );
   }
 
+  const imageSource = getImageSource(breed);
+
   return (
     <>
-      <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       
-      {/* Clean Header */}
-      <LinearGradient
-        colors={[Colors.background, Colors.surfaceVariant]}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={handleBackPress}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.backIcon}>←</Text>
-          </TouchableOpacity>
-          
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{breed.name}</Text>
-            <Text style={styles.headerSubtitle}>Cat Breed Encyclopedia</Text>
+      {/* Hero Image Section */}
+      <View style={styles.heroContainer}>
+        <Image source={imageSource} style={styles.heroImage} resizeMode="cover" />
+        
+        {/* Header Overlay */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.3)', 'transparent', 'rgba(0,0,0,0.8)']}
+          style={styles.heroOverlay}
+        >
+          {/* Navigation Header */}
+          <View style={[styles.navigationHeader, { paddingTop: Platform.OS === 'ios' ? 44 : 24 }]}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.favoriteButtonContainer}>
+              <AnimatedHeart
+                isFavorite={isFavorite(breed.id!)}
+                onPress={handleFavoritePress}
+                size="md"
+                showBackground={false}
+              />
+            </TouchableOpacity>
           </View>
-          
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={handleFavoritePress}
-            activeOpacity={0.7}
-          >
-            <AnimatedHeart
-              isFavorite={isFavorite(breed.id!)}
-              onPress={handleFavoritePress}
-              size="md"
-              showBackground={false}
-            />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      </View>
 
       <ScrollView 
         style={styles.container} 
@@ -142,11 +243,13 @@ export default function BreedDetailScreen({ route }: Props) {
               <Text style={styles.breedName}>{breed.name}</Text>
               <Text style={styles.breedOrigin}>Origin: {breed.origin}</Text>
             </View>
-            <Badge 
-              text={breed.tica_code} 
-              variant="primary" 
-              size="sm"
-            />
+            {breed.tica_code && (
+              <Badge 
+                text={breed.tica_code} 
+                variant="primary" 
+                size="sm"
+              />
+            )}
           </View>
         </View>
 
@@ -169,10 +272,6 @@ export default function BreedDetailScreen({ route }: Props) {
             <View style={styles.factRow}>
               <Text style={styles.factLabel}>Lifespan:</Text>
               <Text style={styles.factValue}>{breed.lifespan_min}-{breed.lifespan_max} years</Text>
-            </View>
-            <View style={styles.factRow}>
-              <Text style={styles.factLabel}>Weight Range:</Text>
-              <Text style={styles.factValue}>{breed.weight_min_female}-{breed.weight_max_male} kg</Text>
             </View>
             <View style={styles.factRow}>
               <Text style={styles.factLabel}>Grooming Needs:</Text>
@@ -201,6 +300,12 @@ export default function BreedDetailScreen({ route }: Props) {
           </View>
         </View>
 
+        {/* Personality Profile Visualization */}
+        {renderPersonalityChart()}
+
+        {/* Weight Comparison Visualization */}
+        {renderWeightChart()}
+
         {/* Care Requirements */}
         {breed.care_requirements && (
           <View style={styles.section}>
@@ -217,7 +322,17 @@ export default function BreedDetailScreen({ route }: Props) {
           </View>
         )}
 
-        {/* Health Considerations */}
+        {/* Genetic Information */}
+        {breed.genetic_info && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Genetic Information</Text>
+            <View style={styles.healthNote}>
+              <Text style={styles.healthText}>{breed.genetic_info}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Health Issues */}
         {breed.health_issues && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Health Considerations</Text>
@@ -234,88 +349,77 @@ export default function BreedDetailScreen({ route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  
-  // Loading State
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: '8%',
-  },
-  loadingText: {
-    marginTop: Spacing.lg,
-    fontSize: Typography.fontSize.base,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
   },
   
-  // Clean Header
-  header: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+  // Hero Section
+  heroContainer: {
+    height: screenHeight * 0.4,
+    position: 'relative',
   },
-  headerContent: {
+  heroImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: Colors.surfaceVariant,
+  },
+  heroOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  
+  // Navigation
+  navigationHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: '5%',
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.sm,
+    ...Shadows.md,
   },
   backIcon: {
-    fontSize: Typography.fontSize.xl,
+    fontSize: 24,
     color: Colors.text,
     fontWeight: Typography.fontWeight.bold,
-    marginLeft: -2,
   },
-  headerCenter: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: Typography.fontSize.lg,
-    fontWeight: Typography.fontWeight.bold,
-    color: Colors.text,
-  },
-  headerSubtitle: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
-    fontWeight: Typography.fontWeight.medium,
-  },
-  favoriteButton: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+  favoriteButtonContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: BorderRadius.full,
+    padding: Spacing.sm,
+    ...Shadows.md,
   },
   
   // Content
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   content: {
-    paddingHorizontal: '5%',
-    paddingVertical: '4%',
+    padding: Spacing.lg,
   },
   
   // Breed Header
   breedHeader: {
-    marginBottom: '8%',
+    marginBottom: '6%',
   },
   titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   titleContent: {
     flex: 1,
@@ -403,6 +507,86 @@ const styles = StyleSheet.create({
     color: Colors.text,
     fontWeight: Typography.fontWeight.medium,
     lineHeight: Typography.fontSize.base * 1.5,
+  },
+
+  // Personality Profile Visualization
+  personalityContainer: {
+    gap: Spacing.lg,
+  },
+  personalityRow: {
+    gap: Spacing.sm,
+  },
+  personalityHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  personalityLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.semibold,
+    color: Colors.text,
+  },
+  personalityScore: {
+    fontSize: Typography.fontSize.sm,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.primary,
+  },
+  personalityBarContainer: {
+    marginTop: Spacing.xs,
+  },
+  personalityBarBackground: {
+    height: 8,
+    backgroundColor: Colors.surfaceVariant,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  personalityBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+  },
+
+  // Weight Visualization
+  weightContainer: {
+    gap: Spacing.lg,
+  },
+  weightRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  weightGenderContainer: {
+    flex: 1,
+  },
+  weightGenderLabel: {
+    fontSize: Typography.fontSize.base,
+    fontWeight: Typography.fontWeight.bold,
+    color: Colors.text,
+    marginBottom: Spacing.xs,
+  },
+  weightRange: {
+    fontSize: Typography.fontSize.sm,
+    color: Colors.textSecondary,
+    fontWeight: Typography.fontWeight.medium,
+  },
+  weightBarContainer: {
+    flex: 2,
+  },
+  weightBarBackground: {
+    height: 12,
+    backgroundColor: Colors.surfaceVariant,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  weightBarFill: {
+    height: '100%',
+    borderRadius: BorderRadius.full,
+  },
+  femaleWeightBar: {
+    backgroundColor: Colors.accent,
+  },
+  maleWeightBar: {
+    backgroundColor: Colors.secondary,
   },
   
   // Health Note

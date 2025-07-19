@@ -1,6 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { DatabaseService } from '../services/DatabaseService';
 import { CatBreed, BreedFilter } from '../types/CatBreed';
+
+interface DatabaseProviderProps {
+  children: React.ReactNode;
+}
 
 interface DatabaseContextType {
   // State
@@ -35,11 +39,11 @@ interface DatabaseContextType {
   };
 }
 
-const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
-
 interface DatabaseProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
+
+const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
 export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) => {
   const [breeds, setBreeds] = useState<CatBreed[]>([]);
@@ -104,7 +108,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         breed.origin.toLowerCase().includes(searchTerm) ||
         breed.temperament.toLowerCase().includes(searchTerm) ||
         breed.coat_pattern?.toLowerCase().includes(searchTerm) ||
-        breed.activity_level.toLowerCase().includes(searchTerm)
+        breed.activity_level.toLowerCase().includes(searchTerm) ||
+        breed.genetic_info?.toLowerCase().includes(searchTerm)
       );
     } catch (err) {
       console.error('Error searching breeds:', err);
@@ -115,53 +120,34 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
 
   // Synchronous filter function for better UI performance
   const filterBreeds = (filter: BreedFilter, sourceBreeds?: CatBreed[]): CatBreed[] => {
+    const breedsToFilter = sourceBreeds || breeds;
+    
     try {
-      const breedsToFilter = sourceBreeds || breeds;
-      
       return breedsToFilter.filter(breed => {
-        // Search query filter
-        if (filter.searchQuery) {
-          const query = filter.searchQuery.toLowerCase();
-          const matchesSearch = 
-            breed.name.toLowerCase().includes(query) ||
-            breed.origin.toLowerCase().includes(query) ||
-            breed.temperament.toLowerCase().includes(query) ||
-            breed.coat_pattern?.toLowerCase().includes(query);
-          
-          if (!matchesSearch) return false;
+        if (filter.searchQuery && !searchBreeds(filter.searchQuery).includes(breed)) {
+          return false;
         }
-        
-        // Origin filter
         if (filter.origin && breed.origin !== filter.origin) {
           return false;
         }
-        
-        // Coat length filter
         if (filter.coatLength && breed.coat_length !== filter.coatLength) {
           return false;
         }
-        
-        // Body type filter
         if (filter.bodyType && breed.body_type !== filter.bodyType) {
           return false;
         }
-        
-        // Activity level filter
         if (filter.activityLevel && breed.activity_level !== filter.activityLevel) {
           return false;
         }
-        
-        // Grooming level filter
         if (filter.groomingLevel && breed.grooming_needs !== filter.groomingLevel) {
           return false;
         }
-        
         return true;
       });
     } catch (err) {
       console.error('Error filtering breeds:', err);
-      setError('Failed to filter breeds');
-      return [];
+      setError('Filter failed');
+      return breedsToFilter;
     }
   };
 
@@ -197,7 +183,8 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
 
   const toggleFavorite = async (breedId: number): Promise<void> => {
     try {
-      if (isFavorite(breedId)) {
+      const isCurrentlyFavorite = await db.isFavorite(breedId);
+      if (isCurrentlyFavorite) {
         await removeFromFavorites(breedId);
       } else {
         await addToFavorites(breedId);
@@ -209,7 +196,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
   };
 
   const isFavorite = (breedId: number): boolean => {
-    return favorites.some(breed => breed.id === breedId);
+    return favorites.some(favorite => favorite.id === breedId);
   };
 
   const getSearchHistory = async (): Promise<string[]> => {
@@ -217,6 +204,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       return await db.getSearchHistory();
     } catch (err) {
       console.error('Error getting search history:', err);
+      setError('Failed to load search history');
       return [];
     }
   };
@@ -226,6 +214,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await db.addToSearchHistory(query);
     } catch (err) {
       console.error('Error adding to search history:', err);
+      // Don't set error state for search history failures
     }
   };
 
