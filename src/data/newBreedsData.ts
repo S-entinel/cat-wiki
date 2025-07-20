@@ -1232,36 +1232,6 @@ export const catBreedsData: CreateCatBreed[] = [
     image_path: 'ocicat.jpg'
   },
   {
-    name: 'Oriental Longhair',
-    origin: 'Thailand',
-    coat_length: 'Semi-long',
-    coat_pattern: 'Various colors and patterns',
-    body_type: 'Oriental',
-    temperament: 'Active, vocal, social, intelligent',
-    activity_level: 'High',
-    grooming_needs: 'Medium',
-    health_issues: 'Similar to Siamese: heart, eye, and respiratory issues',
-    lifespan_min: 12,
-    lifespan_max: 15,
-    weight_min_female: 3.0,
-    weight_max_female: 4.0,
-    weight_min_male: 3.5,
-    weight_max_male: 5.0,
-    description: 'Long-haired version of the Oriental Shorthair with flowing coat and vocal personality. They are elegant cats with strong social needs and the same demanding, conversational nature as their Siamese relatives.',
-    care_requirements: 'Daily brushing, high social interaction, mental stimulation, vocal engagement, warm environment',
-    ideal_for: 'Interactive families, those who enjoy vocal cats, experienced owners, people wanting elegant cats',
-    genetic_info: 'Shares Siamese/Oriental genetic background. May carry HCM, PRA, and amyloidosis genes. Regular health screening recommended.',
-    personality_scores: {
-      energy_level: 8,
-      friendliness: 9,
-      intelligence: 9,
-      independence: 2,
-      playfulness: 8,
-      vocality: 9
-    },
-    image_path: 'oriental-longhair.jpg'
-  },
-  {
     name: 'Oriental Shorthair',
     origin: 'Thailand',
     coat_length: 'Short',
