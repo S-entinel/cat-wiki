@@ -167,13 +167,13 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
   },
   accentText: {
-    color: Colors.text,
+    color: Colors.textInverse,
   },
   successText: {
     color: Colors.textInverse,
   },
   warningText: {
-    color: Colors.text,
+    color: Colors.textInverse,
   },
   errorText: {
     color: Colors.textInverse,

@@ -38,18 +38,15 @@ export default function HomeScreen() {
   }, []);
 
   const navigateToBreeds = () => {
-    // @ts-ignore
-    navigation.navigate('Breeds');
+    navigation.navigate('Breeds' as never);
   };
 
   const navigateToFavorites = () => {
-    // @ts-ignore
-    navigation.navigate('Favorites');
+    navigation.navigate('Favorites' as never);
   };
 
   const navigateToQuiz = () => {
-    // @ts-ignore
-    navigation.navigate('Quiz');
+    navigation.navigate('Quiz' as never);
   };
 
   return (
@@ -73,8 +70,8 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.headerContent}>
-            <Text style={styles.appTitle}>Cat Breeds</Text>
-            <Text style={styles.appSubtitle}>Encyclopedia</Text>
+            <Text style={styles.appTitle}>Nyandex</Text>
+            <Text style={styles.appSubtitle}>Cat Breed Index</Text>
           </View>
           <View style={styles.headerIcon}>
             <Text style={styles.headerSymbol}>◆</Text>
@@ -96,6 +93,8 @@ export default function HomeScreen() {
               style={styles.statCard}
               onPress={navigateToBreeds}
               activeOpacity={0.8}
+              accessibilityLabel={`${breeds.length} cat breeds available`}
+              accessibilityRole="button"
             >
               <Text style={styles.statNumber}>{breeds.length}</Text>
               <Text style={styles.statLabel}>Breeds</Text>
@@ -104,6 +103,8 @@ export default function HomeScreen() {
               style={styles.statCard}
               onPress={navigateToFavorites}
               activeOpacity={0.8}
+              accessibilityLabel={`${favorites.length} favorite breeds saved`}
+              accessibilityRole="button"
             >
               <Text style={styles.statNumber}>{favorites.length}</Text>
               <Text style={styles.statLabel}>Saved</Text>
@@ -125,6 +126,8 @@ export default function HomeScreen() {
             style={styles.actionCard}
             onPress={navigateToBreeds}
             activeOpacity={0.7}
+            accessibilityLabel="Browse all cat breeds"
+            accessibilityRole="button"
           >
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Browse Breeds</Text>
@@ -136,12 +139,29 @@ export default function HomeScreen() {
             style={styles.actionCard}
             onPress={navigateToQuiz}
             activeOpacity={0.7}
+            accessibilityLabel="Take personality quiz to find your perfect cat breed"
+            accessibilityRole="button"
           >
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Personality Quiz</Text>
               <Text style={styles.actionSymbol}>→</Text>
             </View>
           </TouchableOpacity>
+
+          {favorites.length > 0 && (
+            <TouchableOpacity 
+              style={styles.actionCard}
+              onPress={navigateToFavorites}
+              activeOpacity={0.7}
+              accessibilityLabel="View your favorite cat breeds"
+              accessibilityRole="button"
+            >
+              <View style={styles.actionContent}>
+                <Text style={styles.actionTitle}>Your Favorites</Text>
+                <Text style={styles.actionSymbol}>→</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </Animated.View>
       </ScrollView>
     </>

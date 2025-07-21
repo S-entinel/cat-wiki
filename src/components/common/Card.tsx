@@ -197,16 +197,16 @@ const styles = StyleSheet.create({
   feature_neutral: {},
   
   featureIcon_primary: {
-    backgroundColor: Colors.mintSoft,
+    backgroundColor: Colors.primarySoft,
   },
   featureIcon_secondary: {
-    backgroundColor: Colors.coralSoft,
+    backgroundColor: Colors.secondarySoft,
   },
   featureIcon_accent: {
-    backgroundColor: Colors.skySoft,
+    backgroundColor: Colors.accentSoft,
   },
   featureIcon_neutral: {
-    backgroundColor: Colors.lemonSoft,
+    backgroundColor: Colors.gray200,
   },
   
   featureContent: {

@@ -242,7 +242,7 @@ export default function PersonalityQuizScreen() {
         colors={[Colors.primary, Colors.primaryDark, Colors.accent]}
         style={[styles.header, { paddingTop: insets.top + 20 }]}
       >
-        <Text style={styles.headerTitle}>Cat Personality Quiz</Text>
+        <Text style={styles.headerTitle}>Personality Quiz</Text>
         <Text style={styles.headerSubtitle}>Discover your ideal feline companion</Text>
       </LinearGradient>
       
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   questionCategory: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.primary,
+    color: Colors.gray700,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },

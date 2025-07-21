@@ -78,7 +78,7 @@ export default function FavoritesScreen() {
     try {
       await getFavorites();
     } catch (error) {
-      console.error('Error loading favorites:', error);
+      console.error('Failed to load favorites:', error);
     }
   };
 
@@ -100,7 +100,7 @@ export default function FavoritesScreen() {
     try {
       await toggleFavorite(breedId);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Failed to toggle favorite:', error);
     }
   }, [toggleFavorite]);
 
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   
   searchBarContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.xl,
     backgroundColor: Colors.background,
   },
   
@@ -516,7 +516,7 @@ const styles = StyleSheet.create({
   personalityLabel: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.semibold,
-    color: Colors.primary,
+    color: Colors.gray700,
     marginBottom: Spacing.xs,
   },
   personalityScores: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
   scoreValue: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.primary,
+    color: Colors.gray800,
   },
   
   // Description

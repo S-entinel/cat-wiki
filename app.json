@@ -1,8 +1,9 @@
 {
   "expo": {
-    "name": "CatBreedEncyclopediaExpo",
-    "slug": "CatBreedEncyclopediaExpo",
+    "name": "Nyandex",
+    "slug": "nyandex",
     "version": "1.0.0",
+    "description": "A comprehensive index of cat breeds with personality matching and favorites",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

@@ -57,7 +57,7 @@ export default function BreedDetailScreen({ route }: Props) {
         setBreed(breedData);
       }
     } catch (error) {
-      console.error('Error fetching breed details:', error);
+      console.error('Failed to fetch breed details:', error);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +71,7 @@ export default function BreedDetailScreen({ route }: Props) {
     try {
       await toggleFavorite(breed.id!);
     } catch (error) {
-      console.error('Error toggling favorite:', error);
+      console.error('Failed to toggle favorite:', error);
     }
   }, [breed.id, toggleFavorite]);
 
@@ -529,7 +529,7 @@ const styles = StyleSheet.create({
   personalityScore: {
     fontSize: Typography.fontSize.sm,
     fontWeight: Typography.fontWeight.bold,
-    color: Colors.primary,
+    color: Colors.gray800,
   },
   personalityBarContainer: {
     marginTop: Spacing.xs,

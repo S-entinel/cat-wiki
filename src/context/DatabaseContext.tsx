@@ -70,7 +70,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await getFavorites();
       
     } catch (err) {
-      console.error('Database initialization error:', err);
+      console.error('Failed to initialize database:', err);
       setError('Failed to initialize database');
     } finally {
       setIsLoading(false);
@@ -82,7 +82,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       const allBreeds = await db.getAllBreeds();
       setBreeds(allBreeds);
     } catch (err) {
-      console.error('Error getting all breeds:', err);
+      console.error('Failed to load breeds:', err);
       setError('Failed to load breeds');
     }
   };
@@ -91,7 +91,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     try {
       return await db.getBreedById(id);
     } catch (err) {
-      console.error('Error getting breed by ID:', err);
+      console.error('Failed to load breed details:', err);
       setError('Failed to load breed details');
       return null;
     }
@@ -112,7 +112,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         breed.genetic_info?.toLowerCase().includes(searchTerm)
       );
     } catch (err) {
-      console.error('Error searching breeds:', err);
+      console.error('Search operation failed:', err);
       setError('Search failed');
       return [];
     }
@@ -145,7 +145,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         return true;
       });
     } catch (err) {
-      console.error('Error filtering breeds:', err);
+      console.error('Filter operation failed:', err);
       setError('Filter failed');
       return breedsToFilter;
     }
@@ -156,7 +156,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       const favoriteBreeds = await db.getFavorites();
       setFavorites(favoriteBreeds);
     } catch (err) {
-      console.error('Error getting favorites:', err);
+      console.error('Failed to load favorites:', err);
       setError('Failed to load favorites');
     }
   };
@@ -166,7 +166,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await db.addToFavorites(breedId);
       await getFavorites(); // Refresh favorites list
     } catch (err) {
-      console.error('Error adding to favorites:', err);
+      console.error('Failed to add to favorites:', err);
       setError('Failed to add to favorites');
     }
   };
@@ -176,7 +176,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
       await db.removeFromFavorites(breedId);
       await getFavorites(); // Refresh favorites list
     } catch (err) {
-      console.error('Error removing from favorites:', err);
+      console.error('Failed to remove from favorites:', err);
       setError('Failed to remove from favorites');
     }
   };
@@ -190,7 +190,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         await addToFavorites(breedId);
       }
     } catch (err) {
-      console.error('Error toggling favorite:', err);
+      console.error('Failed to toggle favorite:', err);
       setError('Failed to update favorites');
     }
   };
@@ -203,7 +203,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     try {
       return await db.getSearchHistory();
     } catch (err) {
-      console.error('Error getting search history:', err);
+      console.error('Failed to load search history:', err);
       setError('Failed to load search history');
       return [];
     }
@@ -213,7 +213,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
     try {
       await db.addToSearchHistory(query);
     } catch (err) {
-      console.error('Error adding to search history:', err);
+      console.error('Failed to save search query:', err);
       // Don't set error state for search history failures
     }
   };
@@ -233,7 +233,7 @@ export const DatabaseProvider: React.FC<DatabaseProviderProps> = ({ children }) 
         bodyTypes
       };
     } catch (err) {
-      console.error('Error getting filter options:', err);
+      console.error('Failed to load filter options:', err);
       setError('Failed to load filter options');
       return {
         origins: [],

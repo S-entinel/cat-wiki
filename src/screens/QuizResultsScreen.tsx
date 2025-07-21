@@ -331,7 +331,7 @@ const styles = StyleSheet.create({
   personalityType: {
     fontSize: Typography.fontSize.xxl,
     fontWeight: Typography.fontWeight.black,
-    color: Colors.primary,
+    color: Colors.gray800,
     marginBottom: '3%',
     textAlign: 'center',
   },
@@ -361,7 +361,7 @@ const styles = StyleSheet.create({
   },
   traitBullet: {
     fontSize: Typography.fontSize.base,
-    color: Colors.primary,
+    color: Colors.gray700,
     marginRight: Spacing.md,
     fontWeight: Typography.fontWeight.bold,
     width: 12,

@@ -95,7 +95,8 @@ export class DatabaseService {
     try {
       return JSON.parse(scoresString);
     } catch (error) {
-      console.error('Error parsing personality scores:', error);
+      // Log parsing errors for debugging but don't fail silently
+      console.error('Failed to parse personality scores:', error);
       return null;
     }
   }
@@ -302,9 +303,6 @@ export class DatabaseService {
 
   // Initialize with seed data
   async seedDatabase(): Promise<void> {
-    // Force re-seeding
-    console.log('Force re-seeding database...');
-    
     // Clear existing data
     this.db.execSync('DELETE FROM breeds');
     this.db.execSync('DELETE FROM favorites');
@@ -318,14 +316,21 @@ export class DatabaseService {
     // Import the new breeds data
     const { catBreedsData } = await import('../data/newBreedsData');
     
+    let successCount = 0;
+    let errorCount = 0;
+    
     for (const breed of catBreedsData) {
       try {
         await this.insertBreed(breed);
-        console.log(`✅ Inserted breed: ${breed.name}`);
+        successCount++;
       } catch (error) {
-        console.error(`❌ Error inserting breed ${breed.name}:`, error);
+        console.error(`Failed to insert breed ${breed.name}:`, error);
+        errorCount++;
       }
     }
-    console.log(`🎉 Database seeded with ${catBreedsData.length} cat breeds!`);
+    
+    if (errorCount > 0) {
+      console.warn(`Database seeded with ${successCount} breeds, ${errorCount} failed`);
+    }
   }
 }
