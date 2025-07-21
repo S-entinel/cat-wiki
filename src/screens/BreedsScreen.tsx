@@ -158,12 +158,6 @@ export default function BreedsScreen() {
         </Text>
       </View>
       
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder="Search cat breeds..."
-      />
-      
       <View style={styles.controlsRow}>
         <TouchableOpacity 
           style={styles.filterButton}
@@ -353,6 +347,15 @@ export default function BreedsScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
+      {/* Fixed SearchBar outside of FlatList */}
+      <View style={styles.searchBarContainer}>
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Search cat breeds..."
+        />
+      </View>
+      
       <FlatList
         data={filteredBreeds}
         renderItem={renderBreed}
@@ -381,6 +384,12 @@ export default function BreedsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  
+  searchBarContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     backgroundColor: Colors.background,
   },
   

@@ -145,14 +145,6 @@ export default function FavoritesScreen() {
           {searchQuery && ' matching your search'}
         </Text>
       </View>
-      
-      {favorites.length > 0 && (
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="Search your favorites..."
-        />
-      )}
     </View>
   );
 
@@ -320,6 +312,17 @@ export default function FavoritesScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={Colors.background} />
       
+      {/* Fixed SearchBar outside of FlatList - only show when there are favorites */}
+      {favorites.length > 0 && (
+        <View style={styles.searchBarContainer}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search your favorites..."
+          />
+        </View>
+      )}
+      
       <FlatList
         data={filteredFavorites}
         renderItem={renderBreed}
@@ -348,6 +351,12 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.background,
+  },
+  
+  searchBarContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
     backgroundColor: Colors.background,
   },
   
