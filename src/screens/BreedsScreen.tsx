@@ -86,6 +86,24 @@ export default function BreedsScreen() {
             return Array.isArray(filterValue) 
               ? filterValue.includes(breed.activity_level)
               : breed.activity_level === filterValue;
+          case 'size':
+            const getSizeCategory = (breed: CatBreed): string => {
+              const avgWeight = (breed.weight_min_female + breed.weight_max_female + breed.weight_min_male + breed.weight_max_male) / 4;
+              if (avgWeight < 4) return 'Small';
+              if (avgWeight < 6) return 'Medium';
+              return 'Large';
+            };
+            return Array.isArray(filterValue)
+              ? filterValue.includes(getSizeCategory(breed))
+              : getSizeCategory(breed) === filterValue;
+          case 'grooming_needs':
+            return Array.isArray(filterValue)
+              ? filterValue.includes(breed.grooming_needs)
+              : breed.grooming_needs === filterValue;
+          case 'body_type':
+            return Array.isArray(filterValue)
+              ? filterValue.includes(breed.body_type)
+              : breed.body_type === filterValue;
           case 'coat_length':
             return Array.isArray(filterValue)
               ? filterValue.includes(breed.coat_length)
@@ -167,6 +185,27 @@ export default function BreedsScreen() {
       }));
     };
 
+    const getSizeCategory = (breed: CatBreed): string => {
+      // Calculate average weight across genders
+      const avgWeight = (breed.weight_min_female + breed.weight_max_female + breed.weight_min_male + breed.weight_max_male) / 4;
+      if (avgWeight < 4) return 'Small';
+      if (avgWeight < 6) return 'Medium';
+      return 'Large';
+    };
+
+    const getSizeOptions = () => {
+      const sizeCounts: { [key: string]: number } = {};
+      breeds.forEach(breed => {
+        const size = getSizeCategory(breed);
+        sizeCounts[size] = (sizeCounts[size] || 0) + 1;
+      });
+      return [
+        { label: 'Small', value: 'Small', count: sizeCounts['Small'] || 0 },
+        { label: 'Medium', value: 'Medium', count: sizeCounts['Medium'] || 0 },
+        { label: 'Large', value: 'Large', count: sizeCounts['Large'] || 0 }
+      ];
+    };
+
     return [
       {
         id: 'activity',
@@ -178,10 +217,34 @@ export default function BreedsScreen() {
         selectedValue: (activeFilters.activity as string) || ''
       },
       {
+        id: 'size',
+        title: 'Size',
+        options: getSizeOptions(),
+        selectedValue: (activeFilters.size as string) || ''
+      },
+      {
+        id: 'grooming_needs',
+        title: 'Grooming Needs',
+        options: getUniqueValues('grooming_needs').sort((a, b) => {
+          const order = ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High'];
+          return order.indexOf(a.value) - order.indexOf(b.value);
+        }),
+        selectedValue: (activeFilters.grooming_needs as string) || ''
+      },
+      {
+        id: 'body_type',
+        title: 'Body Type',
+        options: getUniqueValues('body_type').sort((a, b) => {
+          const order = ['Cobby', 'Semi-cobby', 'Semi-foreign', 'Foreign', 'Oriental'];
+          return order.indexOf(a.value) - order.indexOf(b.value);
+        }),
+        selectedValue: (activeFilters.body_type as string) || ''
+      },
+      {
         id: 'coat_length',
         title: 'Coat Length',
         options: getUniqueValues('coat_length').sort((a, b) => {
-          const order = ['Short', 'Medium', 'Long'];
+          const order = ['Hairless', 'Short', 'Medium', 'Semi-long', 'Long'];
           return order.indexOf(a.value) - order.indexOf(b.value);
         }),
         selectedValue: (activeFilters.coat_length as string) || ''
