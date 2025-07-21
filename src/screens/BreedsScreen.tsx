@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,6 +22,7 @@ import { Button } from '../components/common/Button';
 import { Badge } from '../components/common/Badge';
 import { SearchBar } from '../components/common/SearchBar';
 import { AnimatedHeart } from '../components/AnimatedHeart';
+import { FilterDropdown, FilterCategory } from '../components/FilterDropdown';
 import { catImages } from '../assets/catPhotos/imageMap';
 import { 
   Colors, 
@@ -49,7 +50,8 @@ export default function BreedsScreen() {
   const [filteredBreeds, setFilteredBreeds] = useState<CatBreed[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'activity' | 'origin'>('name');
-  const [showFilters, setShowFilters] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<{ [key: string]: string | string[] }>({});
+  const [activeFiltersCount, setActiveFiltersCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
@@ -57,7 +59,7 @@ export default function BreedsScreen() {
     }, [])
   );
 
-  // Filter and sort breeds based on search query and sort option
+  // Filter and sort breeds based on search query, filters, and sort option
   useEffect(() => {
     let filtered = breeds;
 
@@ -74,6 +76,34 @@ export default function BreedsScreen() {
       );
     }
 
+    // Apply active filters
+    Object.entries(activeFilters).forEach(([filterKey, filterValue]) => {
+      if (!filterValue || (Array.isArray(filterValue) && filterValue.length === 0)) return;
+
+      filtered = filtered.filter(breed => {
+        switch (filterKey) {
+          case 'activity':
+            return Array.isArray(filterValue) 
+              ? filterValue.includes(breed.activity_level)
+              : breed.activity_level === filterValue;
+          case 'coat_length':
+            return Array.isArray(filterValue)
+              ? filterValue.includes(breed.coat_length)
+              : breed.coat_length === filterValue;
+          case 'origin':
+            return Array.isArray(filterValue)
+              ? filterValue.some(value => breed.origin.includes(value))
+              : breed.origin.includes(filterValue as string);
+          case 'coat_pattern':
+            return Array.isArray(filterValue)
+              ? filterValue.some(value => breed.coat_pattern?.includes(value))
+              : breed.coat_pattern?.includes(filterValue as string);
+          default:
+            return true;
+        }
+      });
+    });
+
     // Apply sorting
     filtered = [...filtered].sort((a, b) => {
       switch (sortBy) {
@@ -89,7 +119,7 @@ export default function BreedsScreen() {
     });
 
     setFilteredBreeds(filtered);
-  }, [breeds, searchQuery, sortBy]);
+  }, [breeds, searchQuery, sortBy, activeFilters]);
 
   const loadBreeds = async () => {
     try {
@@ -120,6 +150,73 @@ export default function BreedsScreen() {
       console.error('Error toggling favorite:', error);
     }
   }, [toggleFavorite]);
+
+  // Memoize filter categories to prevent unnecessary re-renders
+  const filterCategories = useMemo((): FilterCategory[] => {
+    const getUniqueValues = (key: keyof CatBreed) => {
+      const values = breeds.map(breed => breed[key]).filter(Boolean);
+      const counts: { [key: string]: number } = {};
+      values.forEach(value => {
+        const stringValue = String(value);
+        counts[stringValue] = (counts[stringValue] || 0) + 1;
+      });
+      return Object.entries(counts).map(([value, count]) => ({
+        label: value,
+        value,
+        count
+      }));
+    };
+
+    return [
+      {
+        id: 'activity',
+        title: 'Activity Level',
+        options: getUniqueValues('activity_level').sort((a, b) => {
+          const order = ['Low', 'Low-Medium', 'Medium', 'Medium-High', 'High'];
+          return order.indexOf(a.value) - order.indexOf(b.value);
+        }),
+        selectedValue: (activeFilters.activity as string) || ''
+      },
+      {
+        id: 'coat_length',
+        title: 'Coat Length',
+        options: getUniqueValues('coat_length').sort((a, b) => {
+          const order = ['Short', 'Medium', 'Long'];
+          return order.indexOf(a.value) - order.indexOf(b.value);
+        }),
+        selectedValue: (activeFilters.coat_length as string) || ''
+      },
+      {
+        id: 'coat_pattern',
+        title: 'Coat Pattern',
+        options: getUniqueValues('coat_pattern'),
+        selectedValue: '',
+        multiSelect: true,
+        selectedValues: (activeFilters.coat_pattern as string[]) || []
+      }
+    ];
+  }, [breeds, activeFilters]);
+
+  const handleApplyFilters = useCallback((filters: { [categoryId: string]: string | string[] }) => {
+    setActiveFilters(filters);
+    
+    // Count active filters
+    let count = 0;
+    Object.values(filters).forEach(value => {
+      if (Array.isArray(value)) {
+        count += value.length;
+      } else if (value && value !== '') {
+        count += 1;
+      }
+    });
+    
+    setActiveFiltersCount(count);
+  }, []);
+
+  const handleResetFilters = useCallback(() => {
+    setActiveFilters({});
+    setActiveFiltersCount(0);
+  }, []);
 
   const getImageSource = (breed: CatBreed) => {
     // Try image_path first (should be the filename like 'abyssinian.jpg')
@@ -159,13 +256,13 @@ export default function BreedsScreen() {
       </View>
       
       <View style={styles.controlsRow}>
-        <TouchableOpacity 
-          style={styles.filterButton}
-          onPress={() => setShowFilters(!showFilters)}
-        >
-          <Text style={styles.filterButtonText}>Filters</Text>
-          <Text style={styles.filterIcon}>▼</Text>
-        </TouchableOpacity>
+        <FilterDropdown
+          categories={filterCategories}
+          onApplyFilters={handleApplyFilters}
+          onResetFilters={handleResetFilters}
+          activeFiltersCount={activeFiltersCount}
+          style={styles.filterDropdown}
+        />
         
         <TouchableOpacity 
           style={styles.sortButton}
@@ -464,28 +561,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.md,
   },
-  filterButton: {
+  filterDropdown: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.lg,
-    backgroundColor: Colors.surfaceVariant,
-    borderRadius: BorderRadius.lg,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    ...Shadows.sm,
-  },
-  filterButtonText: {
-    fontSize: Typography.fontSize.sm,
-    fontWeight: Typography.fontWeight.semibold,
-    color: Colors.text,
-    marginRight: Spacing.xs,
-  },
-  filterIcon: {
-    fontSize: Typography.fontSize.sm,
-    color: Colors.textSecondary,
   },
   sortButton: {
     flex: 1,
