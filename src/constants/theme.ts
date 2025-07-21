@@ -5,82 +5,74 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const BASE_UNIT = 4;
 
 export const Colors = {
-  // Multi-pastel Primary Palette
-  primary: '#A8E6CF',
-  primaryLight: '#C8F2E0',
-  primaryDark: '#88D8A3',
-  primarySoft: '#F0FBF4',
+  // Black & White Primary Palette
+  primary: '#000000',
+  primaryLight: '#333333',
+  primaryDark: '#000000',
+  primarySoft: '#F8F8F8',
   
-  // Pastel Secondary Palette
-  secondary: '#FFD3A5',
-  secondaryLight: '#FFE1C1',
-  secondaryDark: '#FFC78A',
-  secondarySoft: '#FFF8F0',
+  // Secondary Palette
+  secondary: '#666666',
+  secondaryLight: '#999999',
+  secondaryDark: '#333333',
+  secondarySoft: '#F5F5F5',
   
-  // Pastel Accent Colors
-  accent: '#A8C8EC',
-  accentLight: '#C1D9F0',
-  accentDark: '#8FB6E8',
-  accentSoft: '#F0F6FC',
+  // Minimal Accent Colors
+  accent: '#000000',
+  accentLight: '#333333',
+  accentDark: '#000000',
+  accentSoft: '#F0F0F0',
   
-  // Additional pastel colors
-  lavender: '#D4A5FF',
-  lavenderSoft: '#F4F0FF',
+  // Grayscale colors
+  gray100: '#F7F7F7',
+  gray200: '#E5E5E5',
+  gray300: '#D4D4D4',
+  gray400: '#A3A3A3',
+  gray500: '#737373',
+  gray600: '#525252',
+  gray700: '#404040',
+  gray800: '#262626',
+  gray900: '#171717',
   
-  coral: '#FFB3BA',
-  coralSoft: '#FFF0F2',
-  
-  mint: '#B3FFD9',
-  mintSoft: '#F0FFFA',
-  
-  lemon: '#FFFACD',
-  lemonSoft: '#FFFEF5',
-  
-  sky: '#87CEEB',
-  skySoft: '#F0F8FF',
-  
-  rose: '#FFC0CB',
-  roseSoft: '#FFF5F7',
-  
-  // Neutral pastels
-  background: '#FDFCFF',
+  // Surfaces
+  background: '#FFFFFF',
   surface: '#FFFFFF',
-  surfaceElevated: '#FEFEFF',
-  surfaceVariant: '#F5F3F7',
+  surfaceElevated: '#FFFFFF',
+  surfaceVariant: '#FAFAFA',
   
-  // Soft text colors
-  text: '#4A3C5A',
-  textSecondary: '#6B5B7A',
-  textTertiary: '#9B8CAB',
+  // Text colors
+  text: '#000000',
+  textSecondary: '#666666',
+  textTertiary: '#999999',
   textInverse: '#FFFFFF',
-  textDisabled: '#C4B8D1',
+  textDisabled: '#CCCCCC',
   
-  // Pastel status colors
-  success: '#B3E5B3',
-  successLight: '#D1F2D1',
-  successDark: '#99DD99',
-  successSoft: '#F5FDF5',
+  // Status colors
+  success: '#000000',
+  successLight: '#333333',
+  successDark: '#000000',
+  successSoft: '#F8F8F8',
   
-  warning: '#FFE4B3',
-  warningLight: '#FFF0D1',
-  warningDark: '#FFD799',
-  warningSoft: '#FFFCF5',
+  warning: '#000000',
+  warningLight: '#333333',
+  warningDark: '#000000',
+  warningSoft: '#F8F8F8',
   
-  error: '#FFB3B3',
-  errorLight: '#FFD1D1',
-  errorDark: '#FF9999',
-  errorSoft: '#FFF5F5',
+  error: '#000000',
+  errorLight: '#333333',
+  errorDark: '#000000',
+  errorSoft: '#F8F8F8',
   
-  info: '#B3D9FF',
-  infoLight: '#D1E7FF',
-  infoDark: '#99CCFF',
-  infoSoft: '#F0F8FF',
+  info: '#000000',
+  infoLight: '#333333',
+  infoDark: '#000000',
+  infoSoft: '#F8F8F8',
   
-  // Soft borders and UI
-  border: '#E8E0ED',
-  borderFocus: '#D4A5FF',
-  overlay: 'rgba(74, 60, 90, 0.6)',
-  shadow: '#4A3C5A',
+  // Borders and UI
+  border: '#E5E5E5',
+  borderFocus: '#000000',
+  overlay: 'rgba(0, 0, 0, 0.5)',
+  shadow: '#000000',
 } as const;
 
 export const Spacing = {

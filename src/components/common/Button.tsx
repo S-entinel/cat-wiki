@@ -114,8 +114,10 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.xl,
     flexDirection: 'row',
     overflow: 'hidden',
-    minHeight: Platform.OS === 'ios' ? 48 : 44,
-    ...Shadows.sm,
+    minHeight: Platform.OS === 'ios' ? 52 : 48,
+    ...Shadows.md,
+    borderWidth: 0.5,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   
   content: {
@@ -127,9 +129,11 @@ const styles = StyleSheet.create({
   
   primary: {
     backgroundColor: Colors.primary,
+    borderColor: Colors.primaryDark,
   },
   secondary: {
     backgroundColor: Colors.secondary,
+    borderColor: Colors.secondaryDark,
   },
   outline: {
     backgroundColor: 'transparent',
@@ -138,25 +142,27 @@ const styles = StyleSheet.create({
   },
   ghost: {
     backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   danger: {
     backgroundColor: Colors.error,
+    borderColor: Colors.errorDark,
   },
   
   sm: {
-    height: 40,
-    paddingHorizontal: Spacing.lg,
-    minHeight: 40,
+    height: 44,
+    paddingHorizontal: Spacing.xl,
+    minHeight: 44,
   },
   md: {
-    height: 48,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 48,
+    height: 52,
+    paddingHorizontal: Spacing.xxl,
+    minHeight: 52,
   },
   lg: {
-    height: 56,
-    paddingHorizontal: Spacing.xxl,
-    minHeight: 56,
+    height: 60,
+    paddingHorizontal: Spacing.xxxl,
+    minHeight: 60,
   },
   
   text: {
@@ -198,7 +204,8 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   disabled: {
-    opacity: 0.6,
+    opacity: 0.5,
+    transform: [{ scale: 0.98 }],
   },
   
   leftIcon: {

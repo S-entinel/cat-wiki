@@ -130,10 +130,11 @@ const styles = StyleSheet.create({
   
   elevated: {
     backgroundColor: Colors.surface,
+    borderWidth: 0,
   },
   outlined: {
     backgroundColor: Colors.surface,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: Colors.border,
   },
   filled: {
@@ -169,10 +170,11 @@ const styles = StyleSheet.create({
   featureCard: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.xl,
-    minHeight: 100,
+    minHeight: 120,
+    borderWidth: 0,
   },
   
   featureIconContainer: {
@@ -181,12 +183,12 @@ const styles = StyleSheet.create({
   },
   
   featureIcon: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.xs,
+    ...Shadows.sm,
   },
   
   feature_primary: {},
